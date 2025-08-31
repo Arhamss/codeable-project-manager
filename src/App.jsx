@@ -7,6 +7,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 // Pages
 import Login from './pages/Login';
+import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
@@ -82,7 +83,14 @@ function App() {
                     <Login />
                 } 
               />
-
+              <Route 
+                path="/register" 
+                element={
+                  isAuthenticated ? 
+                    <Navigate to="/dashboard" replace /> : 
+                    <Register />
+                } 
+              />
               <Route 
                 path="/forgot-password" 
                 element={

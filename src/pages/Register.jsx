@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, User, Key } from 'lucide-react';
 import logo from '../assets/logo.png';
 import useAuthStore from '../stores/authStore';
 import { USER_ROLES, DEPARTMENTS, getDepartmentLabel } from '../types';
@@ -18,7 +18,8 @@ const registerSchema = z.object({
   confirmPassword: z.string(),
   role: z.enum([USER_ROLES.USER, USER_ROLES.ADMIN]),
   department: z.string().optional(),
-  phone: z.string().optional()
+  phone: z.string().optional(),
+  parentPin: z.string().min(4, 'Parent PIN is required')
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ['confirmPassword']
@@ -27,6 +28,7 @@ const registerSchema = z.object({
 const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showParentPin, setShowParentPin] = useState(false);
   const { register: registerUser, isLoading, isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
 
@@ -52,22 +54,37 @@ const Register = () => {
   }, [isAuthenticated, navigate]);
 
   const onSubmit = async (data) => {
-    const { confirmPassword, ...registerData } = data;
-    
-    const result = await registerUser(data.email, data.password, registerData);
-    
-    if (result.success) {
-      toast.success('Account created successfully!');
-      navigate('/dashboard', { replace: true });
-    } else {
-      if (result.error.includes('email-already-in-use')) {
-        setError('email', { message: 'This email is already registered' });
-      } else if (result.error.includes('weak-password')) {
-        setError('password', { message: 'Password is too weak' });
-      } else {
-        setError('email', { message: result.error });
+    try {
+      // Verify parent PIN
+      const validParentPin = import.meta.env.VITE_PARENT_PIN || '1094';
+      
+      if (data.parentPin !== validParentPin) {
+        toast.error('Invalid parent PIN. Only administrators can create accounts.');
+        return;
       }
-      toast.error(result.error);
+
+      // Force role to be admin for public registration
+      const { confirmPassword, parentPin, ...registerData } = data;
+      registerData.role = USER_ROLES.ADMIN;
+      
+      const result = await registerUser(data.email, data.password, registerData);
+      
+      if (result.success) {
+        toast.success('Admin account created successfully!');
+        navigate('/dashboard', { replace: true });
+      } else {
+        if (result.error.includes('email-already-in-use')) {
+          setError('email', { message: 'This email is already registered' });
+        } else if (result.error.includes('weak-password')) {
+          setError('password', { message: 'Password is too weak' });
+        } else {
+          setError('email', { message: result.error });
+        }
+        toast.error(result.error);
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      toast.error('Failed to create account');
     }
   };
 
@@ -89,8 +106,8 @@ const Register = () => {
           >
             <img src={logo} alt="Codeable Logo" className="w-full h-full object-contain" />
           </motion.div>
-          <h1 className="text-3xl font-bold text-white mb-2">Create Account</h1>
-          <p className="text-gray-400">Join our project management platform</p>
+          <h1 className="text-3xl font-bold text-white mb-2">Create Admin Account</h1>
+          <p className="text-gray-400">Register as an administrator (Parent PIN required)</p>
         </div>
 
         {/* Register Form */}
@@ -149,24 +166,7 @@ const Register = () => {
               )}
             </div>
 
-            {/* Role Selection */}
-            <div>
-              <label htmlFor="role" className="block text-sm font-medium text-gray-300 mb-2">
-                Role
-              </label>
-              <select
-                {...register('role')}
-                className={`input-primary w-full ${
-                  errors.role ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
-                }`}
-              >
-                <option value={USER_ROLES.USER}>Team Member</option>
-                <option value={USER_ROLES.ADMIN}>Administrator</option>
-              </select>
-              {errors.role && (
-                <p className="mt-1 text-sm text-red-500">{errors.role.message}</p>
-              )}
-            </div>
+
 
             {/* Department Field (Optional) */}
             <div>
@@ -254,6 +254,43 @@ const Register = () => {
               {errors.confirmPassword && (
                 <p className="mt-1 text-sm text-red-500">{errors.confirmPassword.message}</p>
               )}
+            </div>
+
+            {/* Parent PIN Field */}
+            <div>
+              <label htmlFor="parentPin" className="block text-sm font-medium text-gray-300 mb-2">
+                Parent PIN *
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Key className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  {...register('parentPin')}
+                  type={showParentPin ? 'text' : 'password'}
+                  className={`input-primary pl-10 pr-10 w-full ${
+                    errors.parentPin ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
+                  }`}
+                  placeholder="Enter parent PIN"
+                />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={() => setShowParentPin(!showParentPin)}
+                >
+                  {showParentPin ? (
+                    <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-300" />
+                  ) : (
+                    <Eye className="h-5 w-5 text-gray-400 hover:text-gray-300" />
+                  )}
+                </button>
+              </div>
+              {errors.parentPin && (
+                <p className="mt-1 text-sm text-red-500">{errors.parentPin.message}</p>
+              )}
+              <p className="text-xs text-gray-500 mt-1">
+                Required to verify administrator authorization
+              </p>
             </div>
 
             {/* Submit Button */}
