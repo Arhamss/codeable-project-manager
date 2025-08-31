@@ -19,7 +19,7 @@ const registerSchema = z.object({
   role: z.enum([USER_ROLES.USER, USER_ROLES.ADMIN]),
   department: z.string().optional(),
   phone: z.string().optional(),
-  parentPin: z.string().min(4, 'Parent PIN is required')
+        parentPin: z.string().min(4, 'Admin PIN is required')
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ['confirmPassword']
@@ -55,11 +55,11 @@ const Register = () => {
 
   const onSubmit = async (data) => {
     try {
-      // Verify parent PIN
-      const validParentPin = import.meta.env.VITE_PARENT_PIN || '1094';
+      // Verify admin PIN
+      const validAdminPin = import.meta.env.VITE_PARENT_PIN || '1094';
       
-      if (data.parentPin !== validParentPin) {
-        toast.error('Invalid parent PIN. Only administrators can create accounts.');
+      if (data.parentPin !== validAdminPin) {
+        toast.error('Invalid admin PIN. Only administrators can create accounts.');
         return;
       }
 
@@ -107,7 +107,7 @@ const Register = () => {
             <img src={logo} alt="Codeable Logo" className="w-full h-full object-contain" />
           </motion.div>
           <h1 className="text-3xl font-bold text-white mb-2">Create Admin Account</h1>
-          <p className="text-gray-400">Register as an administrator (Parent PIN required)</p>
+          <p className="text-gray-400">Register as an administrator (Admin PIN required)</p>
         </div>
 
         {/* Register Form */}
@@ -256,10 +256,10 @@ const Register = () => {
               )}
             </div>
 
-            {/* Parent PIN Field */}
+            {/* Admin PIN Field */}
             <div>
               <label htmlFor="parentPin" className="block text-sm font-medium text-gray-300 mb-2">
-                Parent PIN *
+                Admin PIN *
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -271,7 +271,7 @@ const Register = () => {
                   className={`input-primary pl-10 pr-10 w-full ${
                     errors.parentPin ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
                   }`}
-                  placeholder="Enter parent PIN"
+                  placeholder="Enter admin PIN"
                 />
                 <button
                   type="button"
