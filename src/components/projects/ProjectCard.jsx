@@ -108,18 +108,22 @@ const ProjectCard = ({
           </span>
           
           {showActions && (
-            <div className="relative">
+            <div className="relative z-10">
               <button
-                onClick={() => setShowDropdown(!showDropdown)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowDropdown(!showDropdown);
+                }}
                 className="p-1 text-gray-400 hover:text-white transition-colors opacity-0 group-hover:opacity-100"
               >
                 <MoreVertical className="w-4 h-4" />
               </button>
               
               {showDropdown && (
-                <div className="absolute right-0 top-8 bg-dark-800 border border-dark-700 rounded-lg shadow-lg z-10 min-w-32">
+                <div className="absolute right-0 top-8 bg-dark-800 border border-dark-700 rounded-lg shadow-lg z-20 min-w-32">
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       onView?.();
                       setShowDropdown(false);
                     }}
@@ -130,7 +134,8 @@ const ProjectCard = ({
                   </button>
                   {onEdit && (
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         onEdit();
                         setShowDropdown(false);
                       }}
@@ -142,7 +147,8 @@ const ProjectCard = ({
                   )}
                   {onArchive && (
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         onArchive();
                         setShowDropdown(false);
                       }}
@@ -154,7 +160,8 @@ const ProjectCard = ({
                   )}
                   {onDelete && (
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         onDelete();
                         setShowDropdown(false);
                       }}
@@ -310,7 +317,7 @@ const ProjectCard = ({
 
       {/* Click overlay for card navigation */}
       <div 
-        className="absolute inset-0 cursor-pointer"
+        className="absolute inset-0 cursor-pointer z-0"
         onClick={onView}
       />
     </motion.div>
