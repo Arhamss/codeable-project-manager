@@ -39,16 +39,19 @@ const UserModal = ({ isOpen, onClose, onSuccess, user = null }) => {
     handleSubmit,
     formState: { errors },
     reset,
-    setValue
+    setValue,
+    watch
   } = useForm({
     resolver: zodResolver(userSchema),
     defaultValues: {
       name: '',
       email: '',
       role: USER_ROLES.USER,
+      position: '',
       department: '',
       phone: '',
       hourlyRate: 0,
+      monthlySalary: 0,
       password: '',
       isActive: true
     }
@@ -60,9 +63,11 @@ const UserModal = ({ isOpen, onClose, onSuccess, user = null }) => {
       setValue('name', user.name || '');
       setValue('email', user.email || '');
       setValue('role', user.role || USER_ROLES.USER);
+      setValue('position', user.position || '');
       setValue('department', user.department || '');
       setValue('phone', user.phone || '');
       setValue('hourlyRate', user.hourlyRate || 0);
+      setValue('monthlySalary', user.monthlySalary || 0);
       setValue('isActive', user.isActive !== false);
     } else {
       reset();
@@ -292,7 +297,7 @@ const UserModal = ({ isOpen, onClose, onSuccess, user = null }) => {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {/* Department Field */}
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -309,6 +314,27 @@ const UserModal = ({ isOpen, onClose, onSuccess, user = null }) => {
                           placeholder="e.g., Development"
                         />
                       </div>
+                    </div>
+
+                    {/* Monthly Salary Field */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Monthly Salary
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <DollarSign className="h-4 w-4 text-gray-400" />
+                        </div>
+                        <input
+                          {...register('monthlySalary', { valueAsNumber: true })}
+                          type="number"
+                          step="1"
+                          min="0"
+                          className="input-primary pl-10 w-full"
+                          placeholder="0"
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">Used for project cost calculation (160h/month)</p>
                     </div>
 
                     {/* Hourly Rate Field */}
@@ -329,6 +355,7 @@ const UserModal = ({ isOpen, onClose, onSuccess, user = null }) => {
                           placeholder="0.00"
                         />
                       </div>
+                      <p className="text-xs text-gray-500 mt-1">Calculated: ${watch('monthlySalary') ? (watch('monthlySalary') / 160).toFixed(2) : '0.00'}/hr</p>
                     </div>
                   </div>
 

@@ -1,0 +1,22 @@
+{
+  "firebaseConfig": {
+    "apiKey": "AIzaSyAvT8UDXQRuroFb_4y9el2v3klQtQ1DjIE",
+    "authDomain": "codeable-project-manager.firebaseapp.com",
+    "projectId": "codeable-project-manager",
+    "storageBucket": "codeable-project-manager.firebasestorage.app",
+    "messagingSenderId": "121480200753",
+    "appId": "1:121480200753:web:fb9cd43bc800255999cb10",
+    "measurementId": "G-CVPMV1S2SW"
+  },
+  "hostingUrl": "https://codeable-project-manager-1bfdc.web.app",
+  "environmentVariables": {
+    "VITE_FIREBASE_API_KEY": "AIzaSyAvT8UDXQRuroFb_4y9el2v3klQtQ1DjIE",
+    "VITE_FIREBASE_AUTH_DOMAIN": "codeable-project-manager.firebaseapp.com",
+    "VITE_FIREBASE_PROJECT_ID": "codeable-project-manager",
+    "VITE_FIREBASE_STORAGE_BUCKET": "codeable-project-manager.firebasestorage.app",
+    "VITE_FIREBASE_MESSAGING_SENDER_ID": "121480200753",
+    "VITE_FIREBASE_APP_ID": "1:121480200753:web:fb9cd43bc800255999cb10",
+    "VITE_FIREBASE_MEASUREMENT_ID": "G-CVPMV1S2SW",
+    "VITE_FIREBASE_HOSTING_URL": "https://codeable-project-manager-1bfdc.web.app"
+  }
+}
