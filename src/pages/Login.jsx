@@ -171,16 +171,10 @@ const Login = () => {
             </motion.button>
           </form>
 
-          {/* Sign Up Link */}
+          {/* Admin Notice */}
           <div className="mt-6 text-center">
-            <p className="text-gray-400">
-              Don't have an account?{' '}
-              <Link
-                to="/register"
-                className="text-primary-400 hover:text-primary-300 font-medium transition-colors"
-              >
-                Sign up here
-              </Link>
+            <p className="text-gray-400 text-sm">
+              Need an account? Contact your administrator.
             </p>
           </div>
         </motion.div>

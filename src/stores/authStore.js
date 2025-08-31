@@ -209,6 +209,27 @@ const useAuthStore = create(
         }
       },
 
+      // Create user action (admin only)
+      createUser: async (email, password, userData) => {
+        try {
+          const { userData: currentUserData } = get();
+          if (!currentUserData || currentUserData.role !== 'admin') {
+            throw new Error('Only administrators can create user accounts');
+          }
+
+          set({ isLoading: true, error: null });
+          const result = await authService.createUser(email, password, userData);
+          set({ isLoading: false });
+          return { success: true, user: result };
+        } catch (error) {
+          set({
+            isLoading: false,
+            error: error.message
+          });
+          return { success: false, error: error.message };
+        }
+      },
+
       // Helper getters
       isAdmin: () => {
         const { userData } = get();

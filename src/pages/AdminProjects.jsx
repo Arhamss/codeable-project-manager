@@ -34,7 +34,7 @@ const AdminProjects = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'table'
+  const [viewMode, setViewMode] = useState('grid');
   const [showTimeLogModal, setShowTimeLogModal] = useState(false);
   const [selectedProjectForTimeLog, setSelectedProjectForTimeLog] = useState(null);
   const [userTimeLogs, setUserTimeLogs] = useState([]);

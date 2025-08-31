@@ -216,6 +216,38 @@ class AuthService {
     }
   }
 
+  // Create user (admin only)
+  async createUser(email, password, userData) {
+    try {
+      // Check if current user is admin
+      if (!this.isAdmin()) {
+        throw new Error('Only administrators can create user accounts');
+      }
+
+      // Create user in Firebase Auth
+      const { user } = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Prepare user data for Firestore
+      const userDocData = {
+        ...userData,
+        email: user.email,
+        role: userData.role || USER_ROLES.USER,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        createdBy: this.currentUser?.uid || 'admin'
+      };
+
+      // Save user data to Firestore
+      await setDoc(doc(db, 'users', user.uid), userDocData);
+
+      return { user, userData: { id: user.uid, ...userDocData } };
+    } catch (error) {
+      console.error('Create user error:', error);
+      throw error;
+    }
+  }
+
   // Update user profile
   async updateUserProfile(userId, updateData) {
     try {

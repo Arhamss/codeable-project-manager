@@ -22,6 +22,7 @@ import { userService } from '../services/userService';
 import { USER_ROLES } from '../types';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import UserModal from '../components/modals/UserModal';
+import AdminUserCreationModal from '../components/modals/AdminUserCreationModal';
 import UserCard from '../components/users/UserCard';
 import toast from 'react-hot-toast';
 
@@ -33,6 +34,7 @@ const AdminUsers = () => {
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showUserModal, setShowUserModal] = useState(false);
+  const [showAdminUserCreationModal, setShowAdminUserCreationModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'table'
 
@@ -169,7 +171,7 @@ const AdminUsers = () => {
             <p className="text-gray-400">Manage team members, roles, and permissions</p>
           </div>
           <motion.button
-            onClick={() => setShowUserModal(true)}
+            onClick={() => setShowAdminUserCreationModal(true)}
             className="btn-primary flex items-center space-x-2 mt-4 sm:mt-0"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -477,6 +479,13 @@ const AdminUsers = () => {
         }}
         onSuccess={handleUserSuccess}
         user={editingUser}
+      />
+
+      {/* Admin User Creation Modal */}
+      <AdminUserCreationModal
+        isOpen={showAdminUserCreationModal}
+        onClose={() => setShowAdminUserCreationModal(false)}
+        onSuccess={handleUserSuccess}
       />
     </DashboardLayout>
   );
