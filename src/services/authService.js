@@ -4,7 +4,10 @@ import {
   signOut,
   onAuthStateChanged,
   updateProfile,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  updatePassword,
+  EmailAuthProvider,
+  reauthenticateWithCredential
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
@@ -189,6 +192,26 @@ class AuthService {
       await sendPasswordResetEmail(auth, email);
     } catch (error) {
       console.error('Reset password error:', error);
+      throw error;
+    }
+  }
+
+  // Change password
+  async changePassword(currentPassword, newPassword) {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('No authenticated user found');
+      }
+
+      // Re-authenticate user before changing password
+      const credential = EmailAuthProvider.credential(user.email, currentPassword);
+      await reauthenticateWithCredential(user, credential);
+
+      // Update password
+      await updatePassword(user, newPassword);
+    } catch (error) {
+      console.error('Change password error:', error);
       throw error;
     }
   }

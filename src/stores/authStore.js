@@ -193,6 +193,22 @@ const useAuthStore = create(
         }
       },
 
+      // Change password action
+      changePassword: async (currentPassword, newPassword) => {
+        try {
+          set({ isLoading: true, error: null });
+          await authService.changePassword(currentPassword, newPassword);
+          set({ isLoading: false });
+          return { success: true };
+        } catch (error) {
+          set({
+            isLoading: false,
+            error: error.message
+          });
+          return { success: false, error: error.message };
+        }
+      },
+
       // Helper getters
       isAdmin: () => {
         const { userData } = get();

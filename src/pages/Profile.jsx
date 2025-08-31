@@ -3,11 +3,12 @@ import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { User, Mail, Phone, Building, Save } from 'lucide-react';
+import { User, Mail, Phone, Building, Save, Lock } from 'lucide-react';
 import DashboardLayout from '../layouts/DashboardLayout';
 import useAuthStore from '../stores/authStore';
 import { DEPARTMENTS, getDepartmentLabel } from '../types';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
+import PasswordChangeModal from '../components/modals/PasswordChangeModal';
 import toast from 'react-hot-toast';
 
 const profileSchema = z.object({
@@ -19,6 +20,7 @@ const profileSchema = z.object({
 
 const Profile = () => {
   const [isUpdating, setIsUpdating] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
   const { userData, updateProfile } = useAuthStore();
 
   const {
@@ -217,6 +219,20 @@ const Profile = () => {
                 )}
               </motion.button>
             </div>
+
+            {/* Password Change Button */}
+            <div className="pt-4">
+              <motion.button
+                type="button"
+                onClick={() => setShowPasswordModal(true)}
+                className="btn-secondary w-full flex items-center justify-center"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Lock className="w-4 h-4 mr-2" />
+                Change Password
+              </motion.button>
+            </div>
           </form>
         </motion.div>
 
@@ -267,6 +283,12 @@ const Profile = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* Password Change Modal */}
+      <PasswordChangeModal
+        isOpen={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
+      />
     </DashboardLayout>
   );
 };
