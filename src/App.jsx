@@ -16,6 +16,8 @@ import AdminUsers from './pages/AdminUsers';
 import UserProjects from './pages/UserProjects';
 import UserTimeLogs from './pages/UserTimeLogs';
 import Analytics from './pages/Analytics';
+import LeaveManagement from './pages/LeaveManagement';
+import MyLeaves from './pages/MyLeaves';
 import ProjectDetails from './pages/ProjectDetails';
 import Profile from './pages/Profile';
 import NotFound from './pages/NotFound';
@@ -147,6 +149,15 @@ function App() {
               />
               
               <Route 
+                path="/admin/leaves" 
+                element={
+                  <ProtectedRoute requireAdmin={true}>
+                    <LeaveManagement />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
                 path="/user/projects" 
                 element={
                   <ProtectedRoute>
@@ -160,6 +171,15 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <UserTimeLogs />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/user/leaves" 
+                element={
+                  <ProtectedRoute>
+                    <MyLeaves />
                   </ProtectedRoute>
                 } 
               />

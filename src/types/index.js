@@ -186,3 +186,55 @@ export const getDepartmentLabel = (department) => {
   };
   return labels[department] || department;
 };
+
+// Leave Types
+export const LEAVE_TYPES = {
+  SICK: 'sick',
+  CASUAL: 'casual',
+  ANNUAL: 'annual'
+};
+
+// Leave Status
+export const LEAVE_STATUS = {
+  PENDING: 'pending',
+  APPROVED: 'approved',
+  REJECTED: 'rejected',
+  CANCELLED: 'cancelled'
+};
+
+// Default Leave Allocation (per year)
+export const DEFAULT_LEAVE_ALLOCATION = {
+  [LEAVE_TYPES.SICK]: 7,
+  [LEAVE_TYPES.CASUAL]: 7,
+  [LEAVE_TYPES.ANNUAL]: 10
+};
+
+// Utility functions for leave management
+export const getLeaveTypeLabel = (leaveType) => {
+  const labels = {
+    [LEAVE_TYPES.SICK]: 'Sick Leave',
+    [LEAVE_TYPES.CASUAL]: 'Casual Leave',
+    [LEAVE_TYPES.ANNUAL]: 'Annual Leave'
+  };
+  return labels[leaveType] || leaveType;
+};
+
+export const getLeaveStatusLabel = (status) => {
+  const labels = {
+    [LEAVE_STATUS.PENDING]: 'Pending',
+    [LEAVE_STATUS.APPROVED]: 'Approved',
+    [LEAVE_STATUS.REJECTED]: 'Rejected',
+    [LEAVE_STATUS.CANCELLED]: 'Cancelled'
+  };
+  return labels[status] || status;
+};
+
+export const getLeaveStatusColor = (status) => {
+  const colors = {
+    [LEAVE_STATUS.PENDING]: 'text-yellow-400 bg-yellow-400/10',
+    [LEAVE_STATUS.APPROVED]: 'text-green-400 bg-green-400/10',
+    [LEAVE_STATUS.REJECTED]: 'text-red-400 bg-red-400/10',
+    [LEAVE_STATUS.CANCELLED]: 'text-gray-400 bg-gray-400/10'
+  };
+  return colors[status] || 'text-gray-400 bg-gray-400/10';
+};

@@ -58,6 +58,12 @@ const DashboardLayout = ({ children }) => {
         href: '/admin/analytics',
         icon: BarChart3,
         active: location.pathname.startsWith('/admin/analytics')
+      },
+      {
+        name: 'Leave Management',
+        href: '/admin/leaves',
+        icon: Calendar,
+        active: location.pathname.startsWith('/admin/leaves')
       }
     ] : [
       {
@@ -71,6 +77,12 @@ const DashboardLayout = ({ children }) => {
         href: '/user/time-logs',
         icon: Clock,
         active: location.pathname.startsWith('/user/time-logs')
+      },
+      {
+        name: 'My Leaves',
+        href: '/user/leaves',
+        icon: Calendar,
+        active: location.pathname.startsWith('/user/leaves')
       }
     ]),
     {

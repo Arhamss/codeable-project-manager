@@ -19,7 +19,7 @@ import {
 import LoadingSpinner from '../ui/LoadingSpinner';
 import toast from 'react-hot-toast';
 import useAuthStore from '../../stores/authStore';
-import { USER_ROLES, DEPARTMENTS, getDepartmentLabel } from '../../types';
+import { USER_ROLES, DEPARTMENTS, getDepartmentLabel, DEFAULT_LEAVE_ALLOCATION } from '../../types';
 
 const adminUserCreationSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -31,6 +31,7 @@ const adminUserCreationSchema = z.object({
   role: z.enum([USER_ROLES.USER, USER_ROLES.ADMIN]),
   department: z.string().optional(),
   phone: z.string().optional(),
+  monthlySalary: z.number().min(0, 'Monthly salary must be positive'),
   parentPin: z.string().min(4, 'Parent PIN is required')
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
@@ -55,7 +56,8 @@ const AdminUserCreationModal = ({ isOpen, onClose, onSuccess }) => {
     defaultValues: {
       role: USER_ROLES.USER,
       department: '',
-      phone: ''
+      phone: '',
+      monthlySalary: 0
     }
   });
 
@@ -332,6 +334,34 @@ const AdminUserCreationModal = ({ isOpen, onClose, onSuccess }) => {
                           placeholder="Enter phone number"
                         />
                       </div>
+                    </div>
+
+                    {/* Monthly Salary Field */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Monthly Salary (PKR) *
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <span className="text-gray-400 font-medium">₨</span>
+                        </div>
+                        <input
+                          {...register('monthlySalary', { valueAsNumber: true })}
+                          type="number"
+                          min="0"
+                          step="1000"
+                          className={`input-primary pl-8 w-full ${
+                            errors.monthlySalary ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
+                          }`}
+                          placeholder="Enter monthly salary"
+                        />
+                      </div>
+                      {errors.monthlySalary && (
+                        <p className="mt-1 text-sm text-red-500">{errors.monthlySalary.message}</p>
+                      )}
+                      <p className="text-xs text-gray-500 mt-1">
+                        Used for leave deduction calculations
+                      </p>
                     </div>
 
                     {/* Parent PIN Field */}

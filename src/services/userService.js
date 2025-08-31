@@ -15,7 +15,7 @@ import {
 } from 'firebase/firestore';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth, db } from '../lib/firebase';
-import { USER_ROLES } from '../types';
+import { USER_ROLES, DEFAULT_LEAVE_ALLOCATION } from '../types';
 
 class UserService {
   constructor() {
@@ -43,6 +43,7 @@ class UserService {
         phone: userData.phone || '',
         hourlyRate: userData.hourlyRate || 0,
         monthlySalary: userData.monthlySalary || 0,
+        leaveAllocation: userData.leaveAllocation || DEFAULT_LEAVE_ALLOCATION,
         isActive: true,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
