@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   DollarSign,
   TrendingUp,
+  TrendingDown,
   Users,
   FolderOpen,
   Calendar,
@@ -163,9 +164,11 @@ const AdminDashboard = () => {
               <div className={`p-3 rounded-lg ${
                 (analytics.totalProfit || 0) >= 0 ? 'bg-green-600/20' : 'bg-red-600/20'
               }`}>
-                <TrendingUp className={`w-6 h-6 ${
-                  (analytics.totalProfit || 0) >= 0 ? 'text-green-400' : 'text-red-400'
-                }`} />
+                {(analytics.totalProfit || 0) >= 0 ? (
+                  <TrendingUp className="w-6 h-6 text-green-400" />
+                ) : (
+                  <TrendingDown className="w-6 h-6 text-red-400" />
+                )}
               </div>
             </div>
           </motion.div>

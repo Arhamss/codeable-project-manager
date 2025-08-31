@@ -3,9 +3,11 @@ import {
   Eye, 
   Edit, 
   Archive, 
+  Trash2,
   Clock, 
   DollarSign, 
   TrendingUp,
+  TrendingDown,
   Calendar,
   User,
   Plus,
@@ -19,6 +21,7 @@ const ProjectCard = ({
   onView, 
   onEdit, 
   onArchive, 
+  onDelete,
   onLogTime,
   showActions = true,
   userSpecific = null
@@ -143,10 +146,22 @@ const ProjectCard = ({
                         onArchive();
                         setShowDropdown(false);
                       }}
-                      className="flex items-center w-full px-3 py-2 text-sm text-red-400 hover:bg-red-900/20 hover:text-red-300 transition-colors rounded-b-lg"
+                      className="flex items-center w-full px-3 py-2 text-sm text-red-400 hover:bg-red-900/20 hover:text-red-300 transition-colors"
                     >
                       <Archive className="w-3 h-3 mr-2" />
                       Archive
+                    </button>
+                  )}
+                  {onDelete && (
+                    <button
+                      onClick={() => {
+                        onDelete();
+                        setShowDropdown(false);
+                      }}
+                      className="flex items-center w-full px-3 py-2 text-sm text-red-400 hover:bg-red-900/20 hover:text-red-300 transition-colors rounded-b-lg"
+                    >
+                      <Trash2 className="w-3 h-3 mr-2" />
+                      Delete
                     </button>
                   )}
                 </div>
@@ -210,7 +225,11 @@ const ProjectCard = ({
             
             <div className="flex items-center">
               <div className={`p-2 rounded-lg mr-3 ${profit >= 0 ? 'bg-green-600/20' : 'bg-red-600/20'}`}>
-                <TrendingUp className={`w-4 h-4 ${profit >= 0 ? 'text-green-400' : 'text-red-400'}`} />
+                {profit >= 0 ? (
+                  <TrendingUp className="w-4 h-4 text-green-400" />
+                ) : (
+                  <TrendingDown className="w-4 h-4 text-red-400" />
+                )}
               </div>
               <div>
                 <p className="text-xs text-gray-400">Profit</p>
