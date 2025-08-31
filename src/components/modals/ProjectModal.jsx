@@ -9,12 +9,14 @@ import {
   PROJECT_STATUS, 
   PROJECT_TYPES, 
   BILLING_FREQUENCY, 
+  REVENUE_TYPE,
   COST_CATEGORIES, 
   DEVELOPER_ROLES,
   getCostCategoryLabel, 
   getProjectStatusLabel, 
   getProjectTypeLabel,
   getBillingFrequencyLabel,
+  getRevenueTypeLabel,
   getDeveloperRoleLabel
 } from '../../types';
 import { projectService } from '../../services/projectService';
@@ -34,6 +36,7 @@ const projectSchema = z.object({
   monthlyAmount: z.number().min(0, 'Monthly amount must be non-negative').optional(),
   billingFrequency: z.enum(Object.values(BILLING_FREQUENCY)).optional(),
   hourlyRate: z.number().min(0, 'Hourly rate must be non-negative').optional(),
+  revenueType: z.enum(Object.values(REVENUE_TYPE)).optional(),
   
   // Costs
   costs: z.object({
@@ -58,13 +61,13 @@ const projectSchema = z.object({
   startDate: z.string().optional(),
   endDate: z.string().optional(),
 
-  // Developer Roles Assignments
+  // Developer Roles Assignments (support multiple developers per role)
   developerRoles: z.object({
-    [DEVELOPER_ROLES.FRONTEND_MOBILE]: z.string().optional(),
-    [DEVELOPER_ROLES.FRONTEND_WEB]: z.string().optional(),
-    [DEVELOPER_ROLES.BACKEND]: z.string().optional(),
-    [DEVELOPER_ROLES.UI_DESIGNER]: z.string().optional(),
-    [DEVELOPER_ROLES.TEAM_LEAD]: z.string().min(1, 'Team Lead is required')
+    [DEVELOPER_ROLES.FRONTEND_MOBILE]: z.array(z.string()).optional(),
+    [DEVELOPER_ROLES.FRONTEND_WEB]: z.array(z.string()).optional(),
+    [DEVELOPER_ROLES.BACKEND]: z.array(z.string()).optional(),
+    [DEVELOPER_ROLES.UI_DESIGNER]: z.array(z.string()).optional(),
+    [DEVELOPER_ROLES.TEAM_LEAD]: z.array(z.string()).min(1, 'At least one Team Lead is required')
   })
 });
 
@@ -90,6 +93,7 @@ const ProjectModal = ({ isOpen, onClose, onSuccess, project = null }) => {
       monthlyAmount: 0,
       billingFrequency: BILLING_FREQUENCY.MONTHLY,
       hourlyRate: 0,
+      revenueType: REVENUE_TYPE.FIXED,
       costs: {
         [COST_CATEGORIES.BACKEND]: 0,
         [COST_CATEGORIES.FRONTEND_WEB]: 0,
@@ -107,11 +111,11 @@ const ProjectModal = ({ isOpen, onClose, onSuccess, project = null }) => {
         [COST_CATEGORIES.OTHER]: 0
       },
       developerRoles: {
-        [DEVELOPER_ROLES.FRONTEND_MOBILE]: '',
-        [DEVELOPER_ROLES.FRONTEND_WEB]: '',
-        [DEVELOPER_ROLES.BACKEND]: '',
-        [DEVELOPER_ROLES.UI_DESIGNER]: '',
-        [DEVELOPER_ROLES.TEAM_LEAD]: ''
+        [DEVELOPER_ROLES.FRONTEND_MOBILE]: [],
+        [DEVELOPER_ROLES.FRONTEND_WEB]: [],
+        [DEVELOPER_ROLES.BACKEND]: [],
+        [DEVELOPER_ROLES.UI_DESIGNER]: [],
+        [DEVELOPER_ROLES.TEAM_LEAD]: []
       }
     }
   });
@@ -132,7 +136,15 @@ const ProjectModal = ({ isOpen, onClose, onSuccess, project = null }) => {
         } else if (key === 'costs' || key === 'estimatedHours' || key === 'developerRoles') {
           Object.keys(project[key] || {}).forEach(subKey => {
             if (key === 'developerRoles') {
-              setValue(`${key}.${subKey}`, project[key][subKey] || '');
+              // Handle both old string format and new array format
+              const value = project[key][subKey];
+              if (Array.isArray(value)) {
+                setValue(`${key}.${subKey}`, value);
+              } else if (typeof value === 'string' && value) {
+                setValue(`${key}.${subKey}`, [value]); // Convert old single value to array
+              } else {
+                setValue(`${key}.${subKey}`, []);
+              }
             } else {
               setValue(`${key}.${subKey}`, project[key][subKey] || 0);
             }
@@ -299,7 +311,7 @@ const ProjectModal = ({ isOpen, onClose, onSuccess, project = null }) => {
                         </label>
                         <select
                           {...register('status')}
-                          className={`input-primary w-full ${
+                          className={`input-primary pr-10 w-full ${
                             errors.status ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
                           }`}
                         >
@@ -320,7 +332,7 @@ const ProjectModal = ({ isOpen, onClose, onSuccess, project = null }) => {
                         </label>
                         <select
                           {...register('projectType')}
-                          className={`input-primary w-full ${
+                          className={`input-primary pr-10 w-full ${
                             errors.projectType ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
                           }`}
                         >
@@ -394,7 +406,7 @@ const ProjectModal = ({ isOpen, onClose, onSuccess, project = null }) => {
                             </label>
                             <select
                               {...register('billingFrequency')}
-                              className="input-primary w-full"
+                              className="input-primary pr-10 w-full"
                             >
                               {Object.values(BILLING_FREQUENCY).map((freq) => (
                                 <option key={freq} value={freq}>
@@ -402,6 +414,25 @@ const ProjectModal = ({ isOpen, onClose, onSuccess, project = null }) => {
                                 </option>
                               ))}
                             </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-2">
+                              Revenue Type
+                            </label>
+                            <select
+                              {...register('revenueType')}
+                              className="input-primary pr-10 w-full"
+                            >
+                              {Object.values(REVENUE_TYPE).map((type) => (
+                                <option key={type} value={type}>
+                                  {getRevenueTypeLabel(type)}
+                                </option>
+                              ))}
+                            </select>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Choose whether revenue is fixed or based on hours worked
+                            </p>
                           </div>
                         </>
                       )}
@@ -491,13 +522,13 @@ const ProjectModal = ({ isOpen, onClose, onSuccess, project = null }) => {
                     {/* Costs */}
                     <div className="space-y-4">
                       <h3 className="text-md font-medium text-white border-b border-dark-700 pb-2">
-                        Cost Breakdown
+                        Expected Costs (Optional)
                       </h3>
                       
                       {Object.values(COST_CATEGORIES).map((category) => (
                         <div key={category}>
                           <label className="block text-sm font-medium text-gray-300 mb-2">
-                            {getCostCategoryLabel(category)}
+                            {getCostCategoryLabel(category)} Cost
                           </label>
                           <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -512,6 +543,7 @@ const ProjectModal = ({ isOpen, onClose, onSuccess, project = null }) => {
                               placeholder="0.00"
                             />
                           </div>
+                          <p className="text-xs text-gray-500 mt-1">Expected cost for this category</p>
                         </div>
                       ))}
                     </div>
@@ -525,7 +557,7 @@ const ProjectModal = ({ isOpen, onClose, onSuccess, project = null }) => {
                       {Object.values(COST_CATEGORIES).map((category) => (
                         <div key={category}>
                           <label className="block text-sm font-medium text-gray-300 mb-2">
-                            {getCostCategoryLabel(category)}
+                            {getCostCategoryLabel(category)} Hours
                           </label>
                           <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -540,6 +572,7 @@ const ProjectModal = ({ isOpen, onClose, onSuccess, project = null }) => {
                               placeholder="0.0"
                             />
                           </div>
+                          <p className="text-xs text-gray-500 mt-1">Estimated hours for this category</p>
                         </div>
                       ))}
                     </div>
@@ -561,31 +594,115 @@ const ProjectModal = ({ isOpen, onClose, onSuccess, project = null }) => {
                         <p className="text-sm text-gray-500">Please create some users first in the Users section</p>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-6">
                         {Object.values(DEVELOPER_ROLES).map((role) => (
-                          <div key={role} className="space-y-2">
+                          <div key={role} className="space-y-3">
                             <label className="block text-sm font-medium text-gray-300">
                               {getDeveloperRoleLabel(role)}
                               {role === DEVELOPER_ROLES.TEAM_LEAD && (
                                 <span className="text-red-400 ml-1">*</span>
                               )}
-                            </label>
-                            <select
-                              {...register(`developerRoles.${role}`)}
-                              className="input-primary w-full"
-                            >
-                              <option value="">
+                              <span className="text-xs text-gray-500 ml-2">
                                 {role === DEVELOPER_ROLES.TEAM_LEAD 
-                                  ? 'Select Team Lead' 
-                                  : 'Select Developer (Optional)'
+                                  ? '(Select one or more)' 
+                                  : '(Select multiple developers)'
                                 }
-                              </option>
-                              {users.map((user) => (
-                                <option key={user.id} value={user.id}>
-                                  {user.name || `${user.firstName || ''} ${user.lastName || ''}`} - {user.email}
-                                </option>
-                              ))}
-                            </select>
+                              </span>
+                            </label>
+                            
+                            {/* Multi-select Dropdown with Chips */}
+                            <div className="space-y-3">
+                              {/* Selected Developers Chips */}
+                              {watch(`developerRoles.${role}`)?.length > 0 && (
+                                <div className="flex flex-wrap gap-2">
+                                  {watch(`developerRoles.${role}`).map((userId) => {
+                                    const user = users.find(u => u.id === userId);
+                                    if (!user) return null;
+                                    return (
+                                      <div
+                                        key={userId}
+                                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary-500/20 border border-primary-500/30 text-sm"
+                                      >
+                                        <div className="w-5 h-5 rounded-full bg-primary-500/30 flex items-center justify-center">
+                                          <span className="text-xs font-medium text-primary-300">
+                                            {(user.name || `${user.firstName || ''} ${user.lastName || ''}`).charAt(0).toUpperCase()}
+                                          </span>
+                                        </div>
+                                        <span className="text-white font-medium">
+                                          {user.name || `${user.firstName || ''} ${user.lastName || ''}`}
+                                        </span>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const currentValue = watch(`developerRoles.${role}`) || [];
+                                            const newValue = currentValue.filter(id => id !== userId);
+                                            setValue(`developerRoles.${role}`, newValue);
+                                          }}
+                                          className="text-primary-300 hover:text-primary-200 transition-colors"
+                                        >
+                                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                          </svg>
+                                        </button>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                              
+                              {/* Dropdown */}
+                              <div className="relative">
+                                <select
+                                  className="input-primary pr-10 w-full"
+                                  onChange={(e) => {
+                                    const selectedUserId = e.target.value;
+                                    if (selectedUserId) {
+                                      const currentValue = watch(`developerRoles.${role}`) || [];
+                                      if (!currentValue.includes(selectedUserId)) {
+                                        const newValue = [...currentValue, selectedUserId];
+                                        setValue(`developerRoles.${role}`, newValue);
+                                      }
+                                      e.target.value = ''; // Reset dropdown
+                                    }
+                                  }}
+                                  value=""
+                                >
+                                  <option value="">
+                                    {role === DEVELOPER_ROLES.TEAM_LEAD 
+                                      ? 'Select Team Lead' 
+                                      : 'Select Developer'
+                                    }
+                                  </option>
+                                  {users
+                                    .filter(user => !watch(`developerRoles.${role}`)?.includes(user.id))
+                                    .map((user) => (
+                                      <option key={user.id} value={user.id}>
+                                        {user.name || `${user.firstName || ''} ${user.lastName || ''}`} - {user.email}
+                                      </option>
+                                    ))
+                                  }
+                                </select>
+                                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                  </svg>
+                                </div>
+                              </div>
+                              
+                              {/* Clear All Button */}
+                              {watch(`developerRoles.${role}`)?.length > 0 && (
+                                <div className="flex justify-end">
+                                  <button
+                                    type="button"
+                                    onClick={() => setValue(`developerRoles.${role}`, [])}
+                                    className="text-xs text-red-400 hover:text-red-300 transition-colors"
+                                  >
+                                    Clear all selections
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                            
                             {errors.developerRoles?.[role] && (
                               <p className="text-red-400 text-xs mt-1">
                                 {errors.developerRoles[role].message}

@@ -42,13 +42,39 @@ const UserTimeLogs = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [timeLogsData, projectsData] = await Promise.all([
+      const [timeLogsData, allProjectsData] = await Promise.all([
         projectService.getUserTimeLogs(userData.id),
         projectService.getAllProjects()
       ]);
       
+      // Filter projects to only show those where the user is assigned as a developer or admin
+      const userAssignedProjects = allProjectsData.filter(project => {
+        // Check if user is admin (show all projects for admin)
+        if (userData.role === 'admin') {
+          return true;
+        }
+        
+        // Check if user is assigned to any developer role in the project
+        const developerRoles = project.developerRoles || {};
+        
+        // Check each role to see if the current user is assigned
+        for (const [role, assignedUserIds] of Object.entries(developerRoles)) {
+          // Handle both old string format and new array format
+          if (Array.isArray(assignedUserIds)) {
+            if (assignedUserIds.includes(userData.id)) {
+              return true;
+            }
+          } else if (assignedUserIds === userData.id) {
+            // Handle old single string format
+            return true;
+          }
+        }
+        
+        return false;
+      });
+      
       setTimeLogs(timeLogsData);
-      setProjects(projectsData);
+      setProjects(userAssignedProjects);
     } catch (error) {
       console.error('Error loading data:', error);
       toast.error('Failed to load time logs');
@@ -254,11 +280,11 @@ const UserTimeLogs = () => {
 
             {/* Work Type Filter */}
             <div className="relative">
-              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 z-10" />
               <select
                 value={workTypeFilter}
                 onChange={(e) => setWorkTypeFilter(e.target.value)}
-                className="input-primary pl-10 w-full sm:w-48"
+                className="input-primary pl-10 pr-10 w-full sm:w-48"
               >
                 <option value="all">All Work Types</option>
                 {Object.values(WORK_TYPES).map((type) => (
@@ -274,7 +300,7 @@ const UserTimeLogs = () => {
               <select
                 value={projectFilter}
                 onChange={(e) => setProjectFilter(e.target.value)}
-                className="input-primary w-full sm:w-48"
+                className="input-primary pr-10 w-full sm:w-48"
               >
                 <option value="all">All Projects</option>
                 {projects.map((project) => (

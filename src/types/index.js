@@ -71,6 +71,12 @@ export const BILLING_FREQUENCY = {
   YEARLY: 'yearly'
 };
 
+// Revenue Type for Projects
+export const REVENUE_TYPE = {
+  FIXED: 'fixed',           // Revenue regardless of hours worked
+  HOURS_BASED: 'hours_based' // Revenue based on hours worked
+};
+
 // Project Status
 export const PROJECT_STATUS = {
   PLANNING: 'planning',
@@ -135,6 +141,14 @@ export const getBillingFrequencyLabel = (frequency) => {
     [BILLING_FREQUENCY.YEARLY]: 'Yearly'
   };
   return labels[frequency] || frequency;
+};
+
+export const getRevenueTypeLabel = (type) => {
+  const labels = {
+    [REVENUE_TYPE.FIXED]: 'Fixed Amount (Regardless of Hours)',
+    [REVENUE_TYPE.HOURS_BASED]: 'Based on Hours Worked'
+  };
+  return labels[type] || type;
 };
 
 export const getDeveloperRoleLabel = (role) => {

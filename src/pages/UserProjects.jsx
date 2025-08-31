@@ -45,11 +45,37 @@ const UserProjects = () => {
       setLoading(true);
       const [projectsData, timeLogsData] = await Promise.all([
         projectService.getAllProjects(),
-        projectService.getUserTimeLogs(userData.id, 50)
+        projectService.getUserTimeLogs(userData.id)
       ]);
       
+      // Filter projects where user is assigned as a developer or admin
+      const userAssignedProjects = projectsData.filter(project => {
+        // Check if user is admin (show all projects for admin)
+        if (userData.role === 'admin') {
+          return true;
+        }
+        
+        // Check if user is assigned to any developer role in the project
+        const developerRoles = project.developerRoles || {};
+        
+        // Check each role to see if the current user is assigned
+        for (const [role, assignedUserIds] of Object.entries(developerRoles)) {
+          // Handle both old string format and new array format
+          if (Array.isArray(assignedUserIds)) {
+            if (assignedUserIds.includes(userData.id)) {
+              return true;
+            }
+          } else if (assignedUserIds === userData.id) {
+            // Handle old single string format
+            return true;
+          }
+        }
+        
+        return false;
+      });
+      
       // Filter only active projects for users
-      const activeProjects = projectsData.filter(project => 
+      const activeProjects = userAssignedProjects.filter(project => 
         project.status === PROJECT_STATUS.IN_PROGRESS || 
         project.status === PROJECT_STATUS.PLANNING
       );
@@ -246,11 +272,11 @@ const UserProjects = () => {
 
             {/* Status Filter */}
             <div className="relative">
-              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 z-10" />
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="input-primary pl-10 w-full sm:w-48"
+                className="input-primary pl-10 pr-10 w-full sm:w-48"
               >
                 <option value="all">All Status</option>
                 <option value={PROJECT_STATUS.PLANNING}>Planning</option>

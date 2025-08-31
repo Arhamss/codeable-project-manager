@@ -23,6 +23,32 @@ const TimeLogModal = ({ isOpen, onClose, onSuccess, projects = [], preselectedPr
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { userData } = useAuthStore();
 
+  // Filter projects to only show those where the user is assigned as a developer or admin
+  const userAssignedProjects = projects.filter(project => {
+    // Check if user is admin (show all projects for admin)
+    if (userData.role === 'admin') {
+      return true;
+    }
+    
+    // Check if user is assigned to any developer role in the project
+    const developerRoles = project.developerRoles || {};
+    
+            // Check each role to see if the current user is assigned
+        for (const [role, assignedUserIds] of Object.entries(developerRoles)) {
+          // Handle both old string format and new array format
+          if (Array.isArray(assignedUserIds)) {
+            if (assignedUserIds.includes(userData.id)) {
+              return true;
+            }
+          } else if (assignedUserIds === userData.id) {
+            // Handle old single string format
+            return true;
+          }
+        }
+    
+    return false;
+  });
+
   const {
     register,
     handleSubmit,
@@ -40,7 +66,7 @@ const TimeLogModal = ({ isOpen, onClose, onSuccess, projects = [], preselectedPr
   });
 
   const selectedProjectId = watch('projectId');
-  const selectedProject = projects.find(p => p.id === selectedProjectId);
+  const selectedProject = userAssignedProjects.find(p => p.id === selectedProjectId);
 
   const onSubmit = async (data) => {
     try {
@@ -131,7 +157,7 @@ const TimeLogModal = ({ isOpen, onClose, onSuccess, projects = [], preselectedPr
                         }`}
                       >
                         <option value="">Select a project</option>
-                        {projects.map((project) => (
+                        {userAssignedProjects.map((project) => (
                           <option key={project.id} value={project.id}>
                             {project.name}
                           </option>

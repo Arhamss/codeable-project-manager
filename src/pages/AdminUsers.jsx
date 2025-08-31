@@ -272,11 +272,11 @@ const AdminUsers = () => {
 
               {/* Role Filter */}
               <div className="relative">
-                <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 z-10" />
                 <select
                   value={roleFilter}
                   onChange={(e) => setRoleFilter(e.target.value)}
-                  className="input-primary pl-10 w-full sm:w-48"
+                  className="input-primary pl-10 pr-10 w-full sm:w-48"
                 >
                   <option value="all">All Roles</option>
                   <option value={USER_ROLES.ADMIN}>Administrators</option>
@@ -289,7 +289,7 @@ const AdminUsers = () => {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="input-primary w-full sm:w-48"
+                  className="input-primary pr-10 w-full sm:w-48"
                 >
                   <option value="all">All Status</option>
                   <option value="active">Active</option>

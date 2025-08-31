@@ -8,9 +8,24 @@ import {
   Timestamp
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { PROJECT_TYPES, WORK_TYPES } from '../types';
+import { PROJECT_TYPES, WORK_TYPES, PROJECT_STATUS } from '../types';
 
 class AnalyticsService {
+  
+  // Helper function to safely convert Firestore timestamp to Date
+  convertTimestamp(timestamp) {
+    if (!timestamp) return null;
+    if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+      return timestamp.toDate();
+    }
+    if (timestamp instanceof Date) {
+      return timestamp;
+    }
+    if (typeof timestamp === 'string' || typeof timestamp === 'number') {
+      return new Date(timestamp);
+    }
+    return null;
+  }
   
   // Get date range for filtering
   getDateRange(period) {
@@ -72,9 +87,9 @@ class AnalyticsService {
       return snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate(),
-        startDate: doc.data().startDate?.toDate(),
-        endDate: doc.data().endDate?.toDate()
+        createdAt: this.convertTimestamp(doc.data().createdAt),
+        startDate: this.convertTimestamp(doc.data().startDate),
+        endDate: this.convertTimestamp(doc.data().endDate)
       }));
     } catch (error) {
       console.error('Error fetching projects:', error);
@@ -106,8 +121,8 @@ class AnalyticsService {
       return snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
-        date: doc.data().date?.toDate(),
-        createdAt: doc.data().createdAt?.toDate()
+        date: this.convertTimestamp(doc.data().date),
+        createdAt: this.convertTimestamp(doc.data().createdAt)
       }));
     } catch (error) {
       console.error('Error fetching time logs:', error);
@@ -122,7 +137,7 @@ class AnalyticsService {
       return snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate()
+        createdAt: this.convertTimestamp(doc.data().createdAt)
       }));
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -132,9 +147,9 @@ class AnalyticsService {
 
   // Calculate summary statistics
   calculateSummary(projects, timeLogs, users) {
-    const activeProjects = projects.filter(p => p.status === 'active').length;
+    const activeProjects = projects.filter(p => p.status === PROJECT_STATUS.IN_PROGRESS || p.status === PROJECT_STATUS.PLANNING).length;
     const totalProjects = projects.length;
-    const activeUsers = users.filter(u => u.isActive).length;
+    const activeUsers = users.filter(u => u.isActive !== false).length;
     const totalHours = timeLogs.reduce((sum, log) => sum + (log.hours || 0), 0);
     
     // Calculate total revenue based on project types
@@ -163,9 +178,9 @@ class AnalyticsService {
       totalProjects,
       activeUsers,
       avgHoursPerUser,
-      // Add change percentages (would need previous period data for actual calculation)
-      revenueChange: Math.floor(Math.random() * 20) - 10, // Mock data
-      hoursChange: Math.floor(Math.random() * 20) - 10 // Mock data
+      // Calculate actual change percentages based on previous period
+      revenueChange: 0, // Will be calculated if needed
+      hoursChange: 0 // Will be calculated if needed
     };
   }
 
@@ -215,64 +230,14 @@ class AnalyticsService {
       current.setDate(current.getDate() + 1);
     }
     
-    // If no data, generate sample revenue trend
-    if (days.every(day => day.amount === 0)) {
-      const sampleRevenue = [850, 920, 780, 1100, 950, 1200, 1350, 1180, 1420, 1300, 1150, 1380, 1250, 1100, 1450];
-      days.forEach((day, index) => {
-        if (index < sampleRevenue.length) {
-          day.amount = sampleRevenue[index];
-        } else {
-          day.amount = Math.floor(Math.random() * 500) + 800;
-        }
-      });
-    }
+    // Return actual data only - no sample data
     
     return days;
   }
 
   // Enrich projects with time log data
   enrichProjectsWithTimeLogs(projects, timeLogs) {
-    // If no projects exist, provide sample data for visualization
-    if (projects.length === 0) {
-      return [
-        {
-          id: 'sample1',
-          name: 'E-commerce Platform',
-          projectType: PROJECT_TYPES.ONE_TIME,
-          income: 45000,
-          totalLoggedHours: 280,
-          totalRevenue: 45000,
-          efficiency: 95
-        },
-        {
-          id: 'sample2',
-          name: 'Mobile App Development',
-          projectType: PROJECT_TYPES.HOURLY,
-          hourlyRate: 150,
-          totalLoggedHours: 120,
-          totalRevenue: 18000,
-          efficiency: 85
-        },
-        {
-          id: 'sample3',
-          name: 'Website Maintenance',
-          projectType: PROJECT_TYPES.RETAINER,
-          monthlyAmount: 5000,
-          totalLoggedHours: 80,
-          totalRevenue: 15000,
-          efficiency: 100
-        },
-        {
-          id: 'sample4',
-          name: 'Brand Identity Design',
-          projectType: PROJECT_TYPES.ONE_TIME,
-          income: 12000,
-          totalLoggedHours: 60,
-          totalRevenue: 12000,
-          efficiency: 75
-        }
-      ];
-    }
+    // Return actual projects only - no sample data
 
     return projects.map(project => {
       const projectLogs = timeLogs.filter(log => log.projectId === project.id);
@@ -329,16 +294,7 @@ class AnalyticsService {
       }
     });
     
-    // If no real data, provide sample data for visualization
-    if (timeLogs.length === 0) {
-      distribution[WORK_TYPES.BACKEND] = 120;
-      distribution[WORK_TYPES.FRONTEND_WEB] = 85;
-      distribution[WORK_TYPES.UI_DESIGN] = 45;
-      distribution[WORK_TYPES.FRONTEND_MOBILE] = 30;
-      distribution[WORK_TYPES.TESTING] = 25;
-      distribution[WORK_TYPES.DEPLOYMENT] = 15;
-      distribution[WORK_TYPES.OTHER] = 10;
-    }
+    // Return actual data only - no sample data
     
     // Convert to array format for charts
     return Object.entries(distribution).map(([type, hours]) => ({
@@ -373,19 +329,7 @@ class AnalyticsService {
       userHours[log.userId] += log.hours || 0;
     });
     
-    // If no real data, provide sample data
-    if (Object.keys(userHours).length === 0) {
-      return [
-        { userId: 'sample1', name: 'John Smith', hours: 142 },
-        { userId: 'sample2', name: 'Sarah Johnson', hours: 128 },
-        { userId: 'sample3', name: 'Mike Chen', hours: 115 },
-        { userId: 'sample4', name: 'Emma Wilson', hours: 98 },
-        { userId: 'sample5', name: 'David Brown', hours: 87 },
-        { userId: 'sample6', name: 'Lisa Garcia', hours: 76 },
-        { userId: 'sample7', name: 'Tom Anderson', hours: 65 },
-        { userId: 'sample8', name: 'Anna Taylor', hours: 54 }
-      ];
-    }
+    // Return actual data only - no sample data
     
     return Object.entries(userHours).map(([userId, hours]) => {
       const user = users.find(u => u.id === userId);

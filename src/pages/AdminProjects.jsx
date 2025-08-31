@@ -17,7 +17,9 @@ import {
 } from 'lucide-react';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { projectService } from '../services/projectService';
-import { getProjectStatusLabel, getProjectTypeLabel, PROJECT_STATUS, PROJECT_TYPES } from '../types';
+
+import { getProjectStatusLabel, getProjectTypeLabel, PROJECT_STATUS, PROJECT_TYPES, REVENUE_TYPE } from '../types';
+import useAuthStore from '../stores/authStore';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import ProjectModal from '../components/modals/ProjectModal';
 import TimeLogModal from '../components/modals/TimeLogModal';
@@ -35,11 +37,15 @@ const AdminProjects = () => {
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'table'
   const [showTimeLogModal, setShowTimeLogModal] = useState(false);
   const [selectedProjectForTimeLog, setSelectedProjectForTimeLog] = useState(null);
+  const [userTimeLogs, setUserTimeLogs] = useState([]);
+  const { userData } = useAuthStore();
   const navigate = useNavigate();
 
   useEffect(() => {
-    loadProjects();
-  }, []);
+    if (userData) {
+      loadProjects();
+    }
+  }, [userData]);
 
   useEffect(() => {
     filterProjects();
@@ -50,6 +56,15 @@ const AdminProjects = () => {
       setLoading(true);
       const projectsData = await projectService.getAllProjects();
       setProjects(projectsData);
+      
+      // Try to load user time logs, but don't fail if it doesn't work
+      try {
+        const timeLogsData = await projectService.getUserTimeLogs(userData.id);
+        setUserTimeLogs(timeLogsData);
+      } catch (timeLogError) {
+        console.warn('Could not load user time logs:', timeLogError);
+        setUserTimeLogs([]);
+      }
     } catch (error) {
       console.error('Error loading projects:', error);
       toast.error('Failed to load projects');
@@ -66,7 +81,7 @@ const AdminProjects = () => {
       filtered = filtered.filter(project =>
         project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         project.client?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        project.description.toLowerCase().includes(searchTerm.toLowerCase())
+        (project.description && project.description.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
 
@@ -114,6 +129,12 @@ const AdminProjects = () => {
     toast.success('Time logged successfully!');
     // Optionally reload projects to update logged hours
     loadProjects();
+  };
+
+  const getUserProjectHours = (projectId) => {
+    return userTimeLogs
+      .filter(log => log.projectId === projectId)
+      .reduce((sum, log) => sum + log.hours, 0);
   };
 
   const getStatusColor = (status) => {
@@ -281,11 +302,11 @@ const AdminProjects = () => {
 
               {/* Status Filter */}
               <div className="relative">
-                <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 z-10" />
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="input-primary pl-10 w-full sm:w-48"
+                  className="input-primary pl-10 pr-10 w-full sm:w-48"
                 >
                   <option value="all">All Status</option>
                   {Object.values(PROJECT_STATUS).map((status) => (
@@ -351,7 +372,11 @@ const AdminProjects = () => {
                     onArchive={() => handleArchiveProject(project.id)}
                     onLogTime={() => handleLogTime(project)}
                     showActions={true}
-                    userSpecific={{ canLogTime: true }}
+                    userSpecific={{
+                      userHours: getUserProjectHours(project.id),
+                      remainingHours: Math.max(0, Object.values(project.estimatedHours || {}).reduce((sum, hours) => sum + hours, 0) - (project.totalLoggedHours || 0)),
+                      canLogTime: true
+                    }}
                   />
                 </motion.div>
               ))}
@@ -381,14 +406,28 @@ const AdminProjects = () => {
                       const totalEstimated = Object.values(project.estimatedHours || {}).reduce((sum, hours) => sum + hours, 0);
                       const progressPercentage = totalEstimated > 0 ? (project.totalLoggedHours / totalEstimated) * 100 : 0;
                       
-                      // Calculate revenue based on project type
+                      // Calculate revenue based on project type and revenue type
                       const getProjectRevenue = () => {
                         if (project.projectType === PROJECT_TYPES.RETAINER) {
-                          return project.monthlyAmount || 0;
+                          // For retainer projects, check revenue type
+                          if (project.revenueType === REVENUE_TYPE.FIXED) {
+                            // Fixed amount regardless of hours worked
+                            return project.monthlyAmount || 0;
+                          } else {
+                            // Based on hours worked (similar to hourly projects)
+                            return (project.monthlyAmount || 0) * (project.totalLoggedHours || 0);
+                          }
                         } else if (project.projectType === PROJECT_TYPES.HOURLY) {
                           return (project.hourlyRate || 0) * (project.totalLoggedHours || 0);
                         } else {
-                          return project.income || 0;
+                          // One-time projects
+                          if (project.revenueType === REVENUE_TYPE.FIXED) {
+                            // Fixed amount regardless of hours worked
+                            return project.income || 0;
+                          } else {
+                            // Based on hours worked
+                            return (project.income || 0) * (project.totalLoggedHours || 0);
+                          }
                         }
                       };
                       
@@ -522,7 +561,7 @@ const AdminProjects = () => {
           setSelectedProjectForTimeLog(null);
         }}
         onSuccess={handleTimeLogSuccess}
-        projects={projects}
+        projects={selectedProjectForTimeLog ? [selectedProjectForTimeLog] : projects}
         preselectedProject={selectedProjectForTimeLog}
       />
     </DashboardLayout>

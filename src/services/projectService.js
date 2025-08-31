@@ -9,6 +9,7 @@ import {
   query,
   where,
   orderBy,
+  limit,
   onSnapshot,
   serverTimestamp
 } from 'firebase/firestore';
@@ -34,7 +35,8 @@ class ProjectService {
       };
 
       const docRef = await addDoc(this.projectsCollection, docData);
-      return { id: docRef.id, ...docData };
+      const createdProject = { id: docRef.id, ...docData };
+      return createdProject;
     } catch (error) {
       console.error('Error creating project:', error);
       throw error;
@@ -76,37 +78,64 @@ class ProjectService {
   // Get all active projects
   async getAllProjects() {
     try {
-      const q = query(
-        this.projectsCollection,
-        where('isActive', '==', true),
-        orderBy('createdAt', 'desc')
-      );
-      
-      const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({
+      // Get all projects without any filters to avoid composite index issues
+      const querySnapshot = await getDocs(this.projectsCollection);
+      const allProjects = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate?.() || doc.data().createdAt,
         updatedAt: doc.data().updatedAt?.toDate?.() || doc.data().updatedAt
       }));
+      
+      // Filter active projects and sort by createdAt on the client side
+      const activeProjects = allProjects
+        .filter(project => project.isActive !== false)
+        .sort((a, b) => {
+          const dateA = a.createdAt instanceof Date ? a.createdAt : new Date(a.createdAt);
+          const dateB = b.createdAt instanceof Date ? b.createdAt : new Date(b.createdAt);
+          return dateB - dateA; // Descending order
+        });
+      
+      // Fix any projects with future dates (this is a temporary fix)
+      const fixedProjects = activeProjects.map(project => {
+        if (project.createdAt && project.createdAt > new Date()) {
+          // If createdAt is in the future, set it to now
+          return {
+            ...project,
+            createdAt: new Date(),
+            needsDateFix: true
+          };
+        }
+        return project;
+      });
+      
+      return fixedProjects;
     } catch (error) {
       console.error('Error fetching projects:', error);
       throw error;
     }
   }
 
-  // Get project by ID
+  // Get project by ID (includes inactive projects)
   async getProjectById(projectId) {
     try {
       const projectDoc = await getDoc(doc(db, 'projects', projectId));
+      
       if (projectDoc.exists()) {
         const data = projectDoc.data();
-        return {
+        const project = {
           id: projectDoc.id,
           ...data,
           createdAt: data.createdAt?.toDate?.() || data.createdAt,
           updatedAt: data.updatedAt?.toDate?.() || data.updatedAt
         };
+        
+        // Ensure isActive is set if not present
+        if (project.isActive === undefined) {
+          project.isActive = true;
+        }
+        
+        return project;
       }
       return null;
     } catch (error) {
@@ -115,22 +144,41 @@ class ProjectService {
     }
   }
 
+  // Fix project with future date (temporary method)
+  async fixProjectDate(projectId) {
+    try {
+      const projectRef = doc(db, 'projects', projectId);
+      await updateDoc(projectRef, {
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+    } catch (error) {
+      console.error('Error fixing project date:', error);
+      throw error;
+    }
+  }
+
   // Listen to projects in real-time
   subscribeToProjects(callback) {
-    const q = query(
-      this.projectsCollection,
-      where('isActive', '==', true),
-      orderBy('createdAt', 'desc')
-    );
-
-    return onSnapshot(q, (querySnapshot) => {
-      const projects = querySnapshot.docs.map(doc => ({
+    // Listen to all projects without filters to avoid composite index issues
+    return onSnapshot(this.projectsCollection, (querySnapshot) => {
+      const allProjects = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate?.() || doc.data().createdAt,
         updatedAt: doc.data().updatedAt?.toDate?.() || doc.data().updatedAt
       }));
-      callback(projects);
+      
+      // Filter active projects and sort by createdAt on the client side
+      const activeProjects = allProjects
+        .filter(project => project.isActive !== false)
+        .sort((a, b) => {
+          const dateA = a.createdAt instanceof Date ? a.createdAt : new Date(a.createdAt);
+          const dateB = b.createdAt instanceof Date ? b.createdAt : new Date(b.createdAt);
+          return dateB - dateA; // Descending order
+        });
+      
+      callback(activeProjects);
     }, (error) => {
       console.error('Error listening to projects:', error);
       callback([]);
@@ -225,17 +273,29 @@ class ProjectService {
         orderBy('date', 'desc')
       );
 
-      if (limit) {
-        q = query(q, limit(limit));
+      // Only apply limit if it's a valid number
+      if (limit && typeof limit === 'number' && limit > 0) {
+        try {
+          q = query(q, limit(limit));
+        } catch (limitError) {
+          console.warn('Firestore limit failed, will apply client-side limit:', limitError);
+        }
       }
       
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({
+      const results = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate?.() || doc.data().createdAt,
         updatedAt: doc.data().updatedAt?.toDate?.() || doc.data().updatedAt
       }));
+
+      // Apply limit on client side if Firestore limit failed
+      if (limit && typeof limit === 'number' && limit > 0) {
+        return results.slice(0, limit);
+      }
+
+      return results;
     } catch (error) {
       console.error('Error fetching user time logs:', error);
       throw error;
@@ -295,8 +355,8 @@ class ProjectService {
         return acc;
       }, {});
 
-      // Recent activity
-      const recentLogs = timeLogs.slice(0, 10);
+      // Recent activity (get more logs for daily breakdown)
+      const recentLogs = timeLogs.slice(0, 50);
 
       return {
         project,

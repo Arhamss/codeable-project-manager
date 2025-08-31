@@ -14,7 +14,7 @@ import {
 import DashboardLayout from '../layouts/DashboardLayout';
 import useAuthStore from '../stores/authStore';
 import { projectService } from '../services/projectService';
-import { getWorkTypeLabel } from '../types';
+import { getWorkTypeLabel, PROJECT_STATUS } from '../types';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import TimeLogModal from '../components/modals/TimeLogModal';
 
@@ -39,16 +39,50 @@ const Dashboard = () => {
       
       // Get all projects
       const allProjects = await projectService.getAllProjects();
-      setProjects(allProjects);
+      
+      // Filter projects where user is assigned as a developer or admin
+      const userAssignedProjects = allProjects.filter(project => {
+        // Check if user is admin (show all projects for admin)
+        if (userData.role === 'admin') {
+          return true;
+        }
+        
+        // Check if user is assigned to any developer role in the project
+        const developerRoles = project.developerRoles || {};
+        
+        // Check each role to see if the current user is assigned
+        for (const [role, assignedUserIds] of Object.entries(developerRoles)) {
+          // Handle both old string format and new array format
+          if (Array.isArray(assignedUserIds)) {
+            if (assignedUserIds.includes(userData.id)) {
+              return true;
+            }
+          } else if (assignedUserIds === userData.id) {
+            // Handle old single string format
+            return true;
+          }
+        }
+        
+        return false;
+      });
+      
+      setProjects(userAssignedProjects);
 
       // Get user's recent time logs
-      const userTimeLogs = await projectService.getUserTimeLogs(userData.id, 10);
-      setRecentTimeLogs(userTimeLogs);
+      let userTimeLogs = [];
+      try {
+        userTimeLogs = await projectService.getUserTimeLogs(userData.id);
+        // Limit to 10 most recent logs on the client side
+        setRecentTimeLogs(userTimeLogs.slice(0, 10));
+      } catch (timeLogError) {
+        console.warn('Could not load user time logs:', timeLogError);
+        setRecentTimeLogs([]);
+      }
 
       // Calculate user stats
       const totalHours = userTimeLogs.reduce((sum, log) => sum + log.hours, 0);
-      const activeProjects = allProjects.filter(p => p.status === 'in_progress').length;
-      const completedProjects = allProjects.filter(p => p.status === 'completed').length;
+      const activeProjects = allProjects.filter(p => p.status === PROJECT_STATUS.IN_PROGRESS || p.status === PROJECT_STATUS.PLANNING).length;
+      const completedProjects = allProjects.filter(p => p.status === PROJECT_STATUS.COMPLETED).length;
 
       setUserStats({
         totalHours,

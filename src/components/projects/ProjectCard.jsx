@@ -12,7 +12,7 @@ import {
   MoreVertical
 } from 'lucide-react';
 import { useState } from 'react';
-import { getProjectStatusLabel, getProjectTypeLabel, PROJECT_STATUS, PROJECT_TYPES } from '../../types';
+import { getProjectStatusLabel, getProjectTypeLabel, PROJECT_STATUS, PROJECT_TYPES, REVENUE_TYPE } from '../../types';
 
 const ProjectCard = ({ 
   project, 
@@ -29,14 +29,28 @@ const ProjectCard = ({
   const progressPercentage = totalEstimated > 0 ? (project.totalLoggedHours / totalEstimated) * 100 : 0;
   const totalCosts = Object.values(project.costs || {}).reduce((sum, cost) => sum + cost, 0);
   
-  // Calculate income based on project type
+  // Calculate income based on project type and revenue type
   const getProjectIncome = () => {
     if (project.projectType === PROJECT_TYPES.RETAINER) {
-      return project.monthlyAmount || 0;
+      // For retainer projects, check revenue type
+      if (project.revenueType === REVENUE_TYPE.FIXED) {
+        // Fixed amount regardless of hours worked
+        return project.monthlyAmount || 0;
+      } else {
+        // Based on hours worked (similar to hourly projects)
+        return (project.monthlyAmount || 0) * (project.totalLoggedHours || 0);
+      }
     } else if (project.projectType === PROJECT_TYPES.HOURLY) {
       return (project.hourlyRate || 0) * (project.totalLoggedHours || 0);
     } else {
-      return project.income || 0;
+      // One-time projects
+      if (project.revenueType === REVENUE_TYPE.FIXED) {
+        // Fixed amount regardless of hours worked
+        return project.income || 0;
+      } else {
+        // Based on hours worked
+        return (project.income || 0) * (project.totalLoggedHours || 0);
+      }
     }
   };
   
@@ -211,29 +225,29 @@ const ProjectCard = ({
         {/* User Specific Metrics */}
         {userSpecific && (
           <div className="grid grid-cols-2 gap-4">
-            <div className="flex items-center">
-              <div className="p-2 bg-blue-600/20 rounded-lg mr-3">
-                <Clock className="w-4 h-4 text-blue-400" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-400">My Hours</p>
-                <p className="text-sm font-medium text-white">
-                  {userSpecific.userHours}h
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-center">
-              <div className="p-2 bg-orange-600/20 rounded-lg mr-3">
-                <TrendingUp className="w-4 h-4 text-orange-400" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-400">Remaining</p>
-                <p className="text-sm font-medium text-white">
-                  {userSpecific.remainingHours}h
-                </p>
-              </div>
-            </div>
+                                        <div className="flex items-center">
+                              <div className="p-2 bg-blue-600/20 rounded-lg mr-3">
+                                <Clock className="w-4 h-4 text-blue-400" />
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-400">My Hours</p>
+                                <p className="text-sm font-medium text-white">
+                                  {userSpecific.userHours || 0}h
+                                </p>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center">
+                              <div className="p-2 bg-orange-600/20 rounded-lg mr-3">
+                                <TrendingUp className="w-4 h-4 text-orange-400" />
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-400">Remaining</p>
+                                <p className="text-sm font-medium text-white">
+                                  {userSpecific.remainingHours || 0}h
+                                </p>
+                              </div>
+                            </div>
           </div>
         )}
 
@@ -254,7 +268,7 @@ const ProjectCard = ({
       <div className="flex space-x-2 pt-4 border-t border-dark-700">
         <motion.button
           onClick={onView}
-          className="btn-secondary flex-1 text-sm py-2"
+          className="btn-secondary flex-1 text-sm py-2 flex items-center justify-center"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
@@ -265,7 +279,7 @@ const ProjectCard = ({
         {userSpecific?.canLogTime && onLogTime && (
           <motion.button
             onClick={onLogTime}
-            className="btn-primary text-sm py-2 px-3"
+            className="btn-primary flex-1 text-sm py-2 flex items-center justify-center"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >

@@ -36,6 +36,7 @@ import { formatCurrency, formatDate } from '../utils/date';
 const Analytics = () => {
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [exportLoading, setExportLoading] = useState(false);
   const [error, setError] = useState(null);
   const [dateRange, setDateRange] = useState('last30days');
   const [selectedProject, setSelectedProject] = useState('all');
@@ -86,27 +87,110 @@ const Analytics = () => {
     setRefreshing(false);
   };
 
-  const exportData = () => {
+  const exportData = async () => {
     if (!analytics) return;
     
-    const exportData = {
-      generatedAt: new Date().toISOString(),
-      dateRange,
-      selectedProject,
-      summary: analytics.summary,
-      projects: analytics.projects,
-      timeTracking: analytics.timeTracking
-    };
+    try {
+      setExportLoading(true);
+      
+      // Create Excel-like CSV format with multiple sheets
+      const csvContent = generateExcelCSV(analytics, dateRange, selectedProject);
+      
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `analytics-${dateRange}-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error exporting data:', error);
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  const generateExcelCSV = (analytics, dateRange, selectedProject) => {
+    const lines = [];
     
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `analytics-${dateRange}-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    // Header with metadata
+    lines.push('Codeable Project Manager - Analytics Report');
+    lines.push(`Generated: ${new Date().toLocaleString()}`);
+    lines.push(`Date Range: ${dateRangeOptions.find(opt => opt.value === dateRange)?.label || dateRange}`);
+    lines.push(`Project Filter: ${selectedProject === 'all' ? 'All Projects' : 'Specific Project'}`);
+    lines.push('');
+    
+    // Summary Sheet
+    lines.push('=== SUMMARY ===');
+    lines.push('Metric,Value');
+    lines.push(`Total Revenue,${formatCurrency(analytics.summary?.totalRevenue || 0)}`);
+    lines.push(`Total Hours,${analytics.summary?.totalHours || 0}h`);
+    lines.push(`Active Projects,${analytics.summary?.activeProjects || 0}`);
+    lines.push(`Total Projects,${analytics.summary?.totalProjects || 0}`);
+    lines.push(`Active Users,${analytics.summary?.activeUsers || 0}`);
+    lines.push(`Average Hours per User,${analytics.summary?.avgHoursPerUser || 0}h`);
+    lines.push('');
+    
+    // Projects Sheet
+    if (analytics.projects && analytics.projects.length > 0) {
+      lines.push('=== PROJECTS ===');
+      lines.push('Name,Type,Status,Revenue,Hours Logged,Efficiency (%)');
+      analytics.projects.forEach(project => {
+        lines.push(`"${project.name}",${getProjectTypeLabel(project.projectType || 'one_time')},${project.status || 'unknown'},${formatCurrency(project.totalRevenue || 0)},${project.totalLoggedHours || 0}h,${project.efficiency || 0}%`);
+      });
+      lines.push('');
+    }
+    
+    // Work Types Sheet
+    if (analytics.workTypes && analytics.workTypes.length > 0) {
+      lines.push('=== WORK TYPES DISTRIBUTION ===');
+      lines.push('Work Type,Hours Logged');
+      analytics.workTypes.forEach(workType => {
+        lines.push(`"${workType.name}",${workType.hours}h`);
+      });
+      lines.push('');
+    }
+    
+    // Team Productivity Sheet
+    if (analytics.userProductivity && analytics.userProductivity.length > 0) {
+      lines.push('=== TEAM PRODUCTIVITY ===');
+      lines.push('Team Member,Hours Logged');
+      analytics.userProductivity.forEach(user => {
+        lines.push(`"${user.name}",${user.hours}h`);
+      });
+      lines.push('');
+    }
+    
+    // Recent Time Logs Sheet
+    if (analytics.timeTracking && analytics.timeTracking.length > 0) {
+      lines.push('=== RECENT TIME LOGS ===');
+      lines.push('User,Project,Work Type,Hours,Date,Description');
+      analytics.timeTracking.slice(0, 100).forEach(log => {
+        const date = log.date ? new Date(log.date).toLocaleDateString() : 'Unknown';
+        const description = log.description ? `"${log.description.replace(/"/g, '""')}"` : '';
+        lines.push(`"${log.userName}","${log.projectName}","${getWorkTypeLabel(log.workType)}",${log.hours}h,${date},${description}`);
+      });
+      lines.push('');
+    }
+    
+    // Revenue Over Time Sheet
+    if (analytics.revenue && analytics.revenue.length > 0) {
+      lines.push('=== REVENUE OVER TIME ===');
+      lines.push('Date,Daily Revenue');
+      analytics.revenue.forEach(day => {
+        const date = new Date(day.date).toLocaleDateString();
+        lines.push(`${date},${formatCurrency(day.amount)}`);
+      });
+      lines.push('');
+    }
+    
+    // Footer
+    lines.push('=== END OF REPORT ===');
+    lines.push(`Report generated on ${new Date().toLocaleString()}`);
+    
+    return lines.join('\n');
   };
 
   if (loading) {
@@ -154,18 +238,31 @@ const Analytics = () => {
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="btn-secondary flex items-center"
+            className="btn-secondary flex items-center justify-center"
           >
-            <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-            Refresh
+            {refreshing ? (
+              <LoadingSpinner size="sm" color="white" />
+            ) : (
+              <>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Refresh
+              </>
+            )}
           </button>
           
           <button
             onClick={exportData}
-            className="btn-primary flex items-center"
+            disabled={exportLoading}
+            className="btn-primary flex items-center justify-center"
           >
-            <Download className="w-4 h-4 mr-2" />
-            Export
+            {exportLoading ? (
+              <LoadingSpinner size="sm" color="white" />
+            ) : (
+              <>
+                <Download className="w-4 h-4 mr-2" />
+                Export to Excel
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -179,7 +276,7 @@ const Analytics = () => {
             <select
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
-              className="bg-dark-700 border border-dark-600 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="bg-dark-700 border border-dark-600 rounded-lg px-3 py-1.5 pr-8 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               {dateRangeOptions.map(option => (
                 <option key={option.value} value={option.value}>
@@ -195,7 +292,7 @@ const Analytics = () => {
             <select
               value={selectedProject}
               onChange={(e) => setSelectedProject(e.target.value)}
-              className="bg-dark-700 border border-dark-600 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="bg-dark-700 border border-dark-600 rounded-lg px-3 py-1.5 pr-8 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Projects</option>
               {projects?.map(project => (
@@ -221,12 +318,6 @@ const Analytics = () => {
               <p className="text-2xl font-bold text-white mt-1">
                 {formatCurrency(summary?.totalRevenue || 0)}
               </p>
-              {summary?.revenueChange && (
-                <div className={`flex items-center mt-2 text-sm ${summary.revenueChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {summary.revenueChange >= 0 ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
-                  {Math.abs(summary.revenueChange)}% from last period
-                </div>
-              )}
             </div>
             <div className="p-3 bg-green-500/20 rounded-lg">
               <DollarSign className="w-6 h-6 text-green-400" />
@@ -246,12 +337,6 @@ const Analytics = () => {
               <p className="text-2xl font-bold text-white mt-1">
                 {summary?.totalHours || 0}h
               </p>
-              {summary?.hoursChange && (
-                <div className={`flex items-center mt-2 text-sm ${summary.hoursChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {summary.hoursChange >= 0 ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
-                  {Math.abs(summary.hoursChange)}% from last period
-                </div>
-              )}
             </div>
             <div className="p-3 bg-blue-500/20 rounded-lg">
               <Clock className="w-6 h-6 text-blue-400" />
@@ -314,43 +399,53 @@ const Analytics = () => {
           className="bg-dark-800 rounded-lg p-6 border border-dark-700"
         >
           <h3 className="text-lg font-semibold text-white mb-4">Revenue Over Time</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={revenue || []} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis 
-                dataKey="date" 
-                stroke="#9CA3AF"
-                fontSize={12}
-                tickFormatter={(value) => {
-                  const date = new Date(value);
-                  return `${date.getMonth() + 1}/${date.getDate()}`;
-                }}
-              />
-              <YAxis 
-                stroke="#9CA3AF" 
-                tickFormatter={(value) => `$${value}`}
-                label={{ value: 'Revenue ($)', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#9CA3AF' } }}
-              />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: '#1F2937', 
-                  border: '1px solid #374151',
-                  borderRadius: '8px',
-                  color: '#F3F4F6'
-                }}
-                formatter={(value) => [formatCurrency(value), 'Daily Revenue']}
-                labelFormatter={(label) => `Date: ${new Date(label).toLocaleDateString()}`}
-              />
-              <Area 
-                type="monotone" 
-                dataKey="amount" 
-                stroke={chartColors.primary} 
-                fill={`${chartColors.primary}20`}
-                strokeWidth={2}
-                name="Revenue"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+          {revenue && revenue.length > 0 && revenue.some(day => day.amount > 0) ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={revenue} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis 
+                  dataKey="date" 
+                  stroke="#9CA3AF"
+                  fontSize={12}
+                  tickFormatter={(value) => {
+                    const date = new Date(value);
+                    return `${date.getMonth() + 1}/${date.getDate()}`;
+                  }}
+                />
+                <YAxis 
+                  stroke="#9CA3AF" 
+                  tickFormatter={(value) => `$${value}`}
+                  label={{ value: 'Revenue ($)', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#9CA3AF' } }}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#1F2937', 
+                    border: '1px solid #374151',
+                    borderRadius: '8px',
+                    color: '#F3F4F6'
+                  }}
+                  formatter={(value) => [formatCurrency(value), 'Daily Revenue']}
+                  labelFormatter={(label) => `Date: ${new Date(label).toLocaleDateString()}`}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="amount" 
+                  stroke={chartColors.primary} 
+                  fill={`${chartColors.primary}20`}
+                  strokeWidth={2}
+                  name="Revenue"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-64 text-gray-400">
+              <div className="text-center">
+                <DollarSign className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>No revenue data found for the selected period.</p>
+                <p className="text-sm">Create projects and log time to see revenue trends.</p>
+              </div>
+            </div>
+          )}
         </motion.div>
 
         {/* Project Types Distribution */}
@@ -361,61 +456,71 @@ const Analytics = () => {
           className="bg-dark-800 rounded-lg p-6 border border-dark-700"
         >
           <h3 className="text-lg font-semibold text-white mb-4">Project Types Distribution</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={projects?.reduce((acc, project) => {
-                  const type = project.projectType;
-                  const existing = acc.find(item => item.type === type);
-                  if (existing) {
-                    existing.count += 1;
-                    existing.revenue += project.totalRevenue || 0;
-                  } else {
-                    acc.push({
-                      type,
-                      name: getProjectTypeLabel(type),
-                      count: 1,
-                      revenue: project.totalRevenue || 0
-                    });
-                  }
-                  return acc;
-                }, []) || []}
-                cx="50%"
-                cy="40%"
-                outerRadius={60}
-                dataKey="count"
-                label={({ name, count, percent }) => `${name}: ${count} (${(percent * 100).toFixed(0)}%)`}
-                labelLine={false}
-              >
-                {projects?.reduce((acc, project) => {
-                  const type = project.projectType;
-                  if (!acc.find(item => item.type === type)) {
-                    acc.push({ type });
-                  }
-                  return acc;
-                }, []).map((_, index) => (
-                  <Cell key={`cell-${index}`} fill={pieColors[index % pieColors.length]} />
-                ))}
-              </Pie>
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: '#1F2937', 
-                  border: '1px solid #374151',
-                  borderRadius: '8px',
-                  color: '#F3F4F6'
-                }}
-                formatter={(value, name) => [
-                  name === 'count' ? `${value} projects` : formatCurrency(value), 
-                  name === 'count' ? 'Projects' : 'Total Revenue'
-                ]}
-              />
-              <Legend 
-                verticalAlign="bottom" 
-                height={36}
-                wrapperStyle={{ color: '#9CA3AF', fontSize: '12px' }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+          {projects && projects.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={projects.reduce((acc, project) => {
+                    const type = project.projectType;
+                    const existing = acc.find(item => item.type === type);
+                    if (existing) {
+                      existing.count += 1;
+                      existing.revenue += project.totalRevenue || 0;
+                    } else {
+                      acc.push({
+                        type,
+                        name: getProjectTypeLabel(type),
+                        count: 1,
+                        revenue: project.totalRevenue || 0
+                      });
+                    }
+                    return acc;
+                  }, [])}
+                  cx="50%"
+                  cy="40%"
+                  outerRadius={60}
+                  dataKey="count"
+                  label={({ name, count, percent }) => `${name}: ${count} (${(percent * 100).toFixed(0)}%)`}
+                  labelLine={false}
+                >
+                  {projects.reduce((acc, project) => {
+                    const type = project.projectType;
+                    if (!acc.find(item => item.type === type)) {
+                      acc.push({ type });
+                    }
+                    return acc;
+                  }, []).map((_, index) => (
+                    <Cell key={`cell-${index}`} fill={pieColors[index % pieColors.length]} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#1F2937', 
+                    border: '1px solid #374151',
+                    borderRadius: '8px',
+                    color: '#F3F4F6'
+                  }}
+                  formatter={(value, name) => [
+                    name === 'count' ? `${value} projects` : formatCurrency(value), 
+                    name === 'count' ? 'Projects' : 'Total Revenue'
+                  ]}
+                />
+                <Legend 
+                  verticalAlign="bottom" 
+                  height={36}
+                  wrapperStyle={{ color: '#9CA3AF', fontSize: '12px' }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-64 text-gray-400">
+              <div className="text-center">
+                <FolderOpen className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>No projects found for the selected period.</p>
+                <p className="text-sm">Create some projects to see analytics data.</p>
+              </div>
+            </div>
+          )}
         </motion.div>
       </div>
 
@@ -429,35 +534,45 @@ const Analytics = () => {
           className="bg-dark-800 rounded-lg p-6 border border-dark-700"
         >
           <h3 className="text-lg font-semibold text-white mb-4">Work Types Distribution</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={workTypes || []} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis 
-                dataKey="name" 
-                stroke="#9CA3AF" 
-                angle={-45}
-                textAnchor="end"
-                height={80}
-                interval={0}
-                fontSize={12}
-              />
-              <YAxis 
-                stroke="#9CA3AF" 
-                label={{ value: 'Hours Logged', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#9CA3AF' } }}
-              />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: '#1F2937', 
-                  border: '1px solid #374151',
-                  borderRadius: '8px',
-                  color: '#F3F4F6'
-                }}
-                formatter={(value) => [`${value} hours`, 'Hours Logged']}
-                labelFormatter={(label) => `Work Type: ${label}`}
-              />
-              <Bar dataKey="hours" fill={chartColors.secondary} radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          {workTypes && workTypes.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={workTypes} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis 
+                  dataKey="name" 
+                  stroke="#9CA3AF" 
+                  angle={-45}
+                  textAnchor="end"
+                  height={80}
+                  interval={0}
+                  fontSize={12}
+                />
+                <YAxis 
+                  stroke="#9CA3AF" 
+                  label={{ value: 'Hours Logged', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#9CA3AF' } }}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#1F2937', 
+                    border: '1px solid #374151',
+                    borderRadius: '8px',
+                    color: '#F3F4F6'
+                  }}
+                  formatter={(value) => [`${value} hours`, 'Hours Logged']}
+                  labelFormatter={(label) => `Work Type: ${label}`}
+                />
+                <Bar dataKey="hours" fill={chartColors.secondary} radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-64 text-gray-400">
+              <div className="text-center">
+                <Clock className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>No time logs found for the selected period.</p>
+                <p className="text-sm">Log some time to see work type distribution.</p>
+              </div>
+            </div>
+          )}
         </motion.div>
 
         {/* User Productivity */}
@@ -468,38 +583,48 @@ const Analytics = () => {
           className="bg-dark-800 rounded-lg p-6 border border-dark-700"
         >
           <h3 className="text-lg font-semibold text-white mb-4">Team Productivity</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart 
-              data={userProductivity || []} 
-              layout="horizontal"
-              margin={{ top: 20, right: 30, left: 100, bottom: 20 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis 
-                type="number" 
-                stroke="#9CA3AF"
-                label={{ value: 'Hours Logged', position: 'insideBottom', offset: -10, style: { textAnchor: 'middle', fill: '#9CA3AF' } }}
-              />
-              <YAxis 
-                dataKey="name" 
-                type="category" 
-                stroke="#9CA3AF" 
-                width={100}
-                fontSize={12}
-              />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: '#1F2937', 
-                  border: '1px solid #374151',
-                  borderRadius: '8px',
-                  color: '#F3F4F6'
-                }}
-                formatter={(value) => [`${value} hours`, 'Hours Logged']}
-                labelFormatter={(label) => `Team Member: ${label}`}
-              />
-              <Bar dataKey="hours" fill={chartColors.accent} radius={[0, 4, 4, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          {userProductivity && userProductivity.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart 
+                data={userProductivity} 
+                layout="horizontal"
+                margin={{ top: 20, right: 30, left: 100, bottom: 20 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis 
+                  type="number" 
+                  stroke="#9CA3AF"
+                  label={{ value: 'Hours Logged', position: 'insideBottom', offset: -10, style: { textAnchor: 'middle', fill: '#9CA3AF' } }}
+                />
+                <YAxis 
+                  dataKey="name" 
+                  type="category" 
+                  stroke="#9CA3AF" 
+                  width={100}
+                  fontSize={12}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#1F2937', 
+                    border: '1px solid #374151',
+                    borderRadius: '8px',
+                    color: '#F3F4F6'
+                  }}
+                  formatter={(value) => [`${value} hours`, 'Hours Logged']}
+                  labelFormatter={(label) => `Team Member: ${label}`}
+                />
+                <Bar dataKey="hours" fill={chartColors.accent} radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-64 text-gray-400">
+              <div className="text-center">
+                <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>No team activity found for the selected period.</p>
+                <p className="text-sm">Team members need to log time to see productivity data.</p>
+              </div>
+            </div>
+          )}
         </motion.div>
       </div>
 

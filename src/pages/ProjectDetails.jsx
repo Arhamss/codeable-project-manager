@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { projectService } from '../services/projectService';
-import { getProjectStatusLabel, getWorkTypeLabel, getCostCategoryLabel } from '../types';
+import { getProjectStatusLabel, getWorkTypeLabel, getCostCategoryLabel, PROJECT_TYPES, REVENUE_TYPE } from '../types';
 import useAuthStore from '../stores/authStore';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import TimeLogModal from '../components/modals/TimeLogModal';
@@ -39,10 +39,20 @@ const ProjectDetails = () => {
   const loadProjectData = async () => {
     try {
       setLoading(true);
+      
+      // First try to get the project directly
+      const projectData = await projectService.getProjectById(projectId);
+      
+      if (!projectData) {
+        toast.error('Project not found');
+        navigate('/dashboard');
+        return;
+      }
+      
       const analyticsData = await projectService.getProjectAnalytics(projectId);
       
       if (!analyticsData) {
-        toast.error('Project not found');
+        toast.error('Project analytics not found');
         navigate('/dashboard');
         return;
       }
@@ -51,7 +61,7 @@ const ProjectDetails = () => {
       setAnalytics(analyticsData);
     } catch (error) {
       console.error('Error loading project data:', error);
-      toast.error('Failed to load project data');
+      toast.error('Failed to load project data: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -89,8 +99,34 @@ const ProjectDetails = () => {
     );
   }
 
+  // Calculate income based on project type and revenue type
+  const getProjectIncome = () => {
+    if (project.projectType === PROJECT_TYPES.RETAINER) {
+      // For retainer projects, check revenue type
+      if (project.revenueType === REVENUE_TYPE.FIXED) {
+        // Fixed amount regardless of hours worked
+        return project.monthlyAmount || 0;
+      } else {
+        // Based on hours worked (similar to hourly projects)
+        return (project.monthlyAmount || 0) * (analytics.totalLoggedHours || 0);
+      }
+    } else if (project.projectType === PROJECT_TYPES.HOURLY) {
+      return (project.hourlyRate || 0) * (analytics.totalLoggedHours || 0);
+    } else {
+      // One-time projects
+      if (project.revenueType === REVENUE_TYPE.FIXED) {
+        // Fixed amount regardless of hours worked
+        return project.income || 0;
+      } else {
+        // Based on hours worked
+        return (project.income || 0) * (analytics.totalLoggedHours || 0);
+      }
+    }
+  };
+
+  const projectIncome = getProjectIncome();
   const totalCosts = Object.values(project.costs || {}).reduce((sum, cost) => sum + cost, 0);
-  const profit = (project.income || 0) - totalCosts;
+  const profit = projectIncome - totalCosts;
 
   return (
     <DashboardLayout>
@@ -188,7 +224,7 @@ const ProjectDetails = () => {
               <div>
                 <p className="text-gray-400 text-sm">Revenue</p>
                 <p className="text-2xl font-bold text-green-400">
-                  ${(project.income || 0).toLocaleString()}
+                  ${projectIncome.toLocaleString()}
                 </p>
               </div>
               <div className="p-3 bg-green-600/20 rounded-lg">
@@ -282,7 +318,7 @@ const ProjectDetails = () => {
               </div>
             </motion.div>
 
-            {/* Hours by Work Type */}
+            {/* Daily Hours Breakdown */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -290,30 +326,130 @@ const ProjectDetails = () => {
               className="card"
             >
               <div className="card-header">
-                <h3 className="text-lg font-semibold text-white">Hours by Work Type</h3>
+                <h3 className="text-lg font-semibold text-white">Daily Hours Breakdown</h3>
               </div>
               
-              <div className="space-y-3">
-                {Object.entries(analytics.hoursByWorkType).map(([workType, hours]) => {
-                  const percentage = analytics.totalLoggedHours > 0 
-                    ? (hours / analytics.totalLoggedHours) * 100 
-                    : 0;
-                  
-                  return (
-                    <div key={workType} className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-300">{getWorkTypeLabel(workType)}</span>
-                        <span className="text-white">{hours}h ({Math.round(percentage)}%)</span>
-                      </div>
-                      <div className="w-full bg-dark-700 rounded-full h-2">
-                        <div 
-                          className="bg-primary-500 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${percentage}%` }}
-                        />
-                      </div>
+              <div className="space-y-4">
+                {/* Color Legend */}
+                <div className="flex flex-wrap gap-3 text-xs border-b border-dark-700 pb-3">
+                  {Object.entries({
+                    'backend': 'Backend Development',
+                    'frontend_web': 'Frontend Web',
+                    'frontend_mobile': 'Frontend Mobile',
+                    'ui_design': 'UI/UX Design',
+                    'deployment': 'Deployment',
+                    'testing': 'Testing',
+                    'documentation': 'Documentation',
+                    'meetings': 'Meetings',
+                    'other': 'Other'
+                  }).map(([workType, label]) => (
+                    <div key={workType} className="flex items-center space-x-1">
+                      <div className={`w-3 h-3 rounded-full ${
+                        workType === 'backend' ? 'bg-blue-500' :
+                        workType === 'frontend_web' ? 'bg-green-500' :
+                        workType === 'frontend_mobile' ? 'bg-purple-500' :
+                        workType === 'ui_design' ? 'bg-yellow-500' :
+                        workType === 'deployment' ? 'bg-red-500' :
+                        workType === 'testing' ? 'bg-indigo-500' :
+                        workType === 'documentation' ? 'bg-pink-500' :
+                        workType === 'meetings' ? 'bg-gray-500' :
+                        'bg-orange-500'
+                      }`} />
+                      <span className="text-gray-400">{label}</span>
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
+
+                {(() => {
+                  // Group time logs by date
+                  const dailyLogs = {};
+                  analytics.recentLogs.forEach(log => {
+                    const date = new Date(log.date).toLocaleDateString();
+                    if (!dailyLogs[date]) {
+                      dailyLogs[date] = {};
+                    }
+                    if (!dailyLogs[date][log.workType]) {
+                      dailyLogs[date][log.workType] = 0;
+                    }
+                    dailyLogs[date][log.workType] += log.hours;
+                  });
+
+                  // Helper function to format date with ordinal suffix
+                  const formatDateWithOrdinal = (dateString) => {
+                    const date = new Date(dateString);
+                    const day = date.getDate();
+                    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                    
+                    // Get ordinal suffix
+                    const getOrdinalSuffix = (day) => {
+                      if (day > 3 && day < 21) return 'th';
+                      switch (day % 10) {
+                        case 1: return 'st';
+                        case 2: return 'nd';
+                        case 3: return 'rd';
+                        default: return 'th';
+                      }
+                    };
+
+                    return `${dayNames[date.getDay()]}, ${day}${getOrdinalSuffix(day)} ${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+                  };
+
+                  // Sort dates
+                  const sortedDates = Object.keys(dailyLogs).sort((a, b) => new Date(a) - new Date(b));
+
+                  return sortedDates.map(date => {
+                    const dayLogs = dailyLogs[date];
+                    const totalDayHours = Object.values(dayLogs).reduce((sum, hours) => sum + hours, 0);
+                    
+                    // Work type colors
+                    const workTypeColors = {
+                      'backend': 'bg-blue-500',
+                      'frontend_web': 'bg-green-500',
+                      'frontend_mobile': 'bg-purple-500',
+                      'ui_design': 'bg-yellow-500',
+                      'deployment': 'bg-red-500',
+                      'testing': 'bg-indigo-500',
+                      'documentation': 'bg-pink-500',
+                      'meetings': 'bg-gray-500',
+                      'other': 'bg-orange-500'
+                    };
+
+                    return (
+                      <div key={date} className="space-y-2 p-3 bg-dark-800 rounded-lg border border-dark-700">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-300 font-medium">{formatDateWithOrdinal(date)}</span>
+                          <span className="text-white font-bold text-lg">{totalDayHours}h</span>
+                        </div>
+                        <div className="w-full bg-dark-700 rounded-full h-4 flex overflow-hidden">
+                          {Object.entries(dayLogs).map(([workType, hours], index) => {
+                            const percentage = totalDayHours > 0 ? (hours / totalDayHours) * 100 : 0;
+                            return (
+                              <div
+                                key={workType}
+                                className={`${workTypeColors[workType] || 'bg-gray-500'} h-full transition-all duration-300`}
+                                style={{ width: `${percentage}%` }}
+                                title={`${getWorkTypeLabel(workType)}: ${hours}h`}
+                              />
+                            );
+                          })}
+                        </div>
+                        <div className="flex flex-wrap gap-2 text-xs">
+                          {Object.entries(dayLogs).map(([workType, hours]) => (
+                            <div key={workType} className="flex items-center space-x-1">
+                              <div className={`w-2 h-2 rounded-full ${workTypeColors[workType] || 'bg-gray-500'}`} />
+                              <span className="text-gray-400">{getWorkTypeLabel(workType)}: {hours}h</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
+                
+                {analytics.recentLogs.length === 0 && (
+                  <p className="text-gray-400 text-center py-4">No time logs recorded yet</p>
+                )}
               </div>
             </motion.div>
           </div>
@@ -335,7 +471,7 @@ const ProjectDetails = () => {
                 <div className="flex justify-between">
                   <span className="text-gray-400">Revenue</span>
                   <span className="text-green-400 font-medium">
-                    ${(project.income || 0).toLocaleString()}
+                    ${projectIncome.toLocaleString()}
                   </span>
                 </div>
                 

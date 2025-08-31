@@ -228,7 +228,7 @@ const UserModal = ({ isOpen, onClose, onSuccess, user = null }) => {
                       </div>
                       <select
                         {...register('role')}
-                        className={`input-primary pl-10 w-full ${
+                        className={`input-primary pl-10 pr-10 w-full ${
                           errors.role ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
                         }`}
                       >
@@ -252,7 +252,7 @@ const UserModal = ({ isOpen, onClose, onSuccess, user = null }) => {
                       </div>
                       <select
                         {...register('position')}
-                        className="input-primary pl-10 w-full"
+                        className="input-primary pl-10 pr-10 w-full"
                       >
                         <option value="">Select Position</option>
                         {Object.values(USER_POSITIONS).map((position) => (
