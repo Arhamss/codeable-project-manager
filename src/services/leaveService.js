@@ -12,7 +12,7 @@ import {
   serverTimestamp,
   writeBatch
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db } from '../lib/firebase';
 import { LEAVE_STATUS, LEAVE_TYPES, DEFAULT_LEAVE_ALLOCATION } from '../types';
 
 class LeaveService {
