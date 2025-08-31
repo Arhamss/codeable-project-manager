@@ -12,6 +12,7 @@ import {
   User,
   BarChart3,
   Clock,
+  Calendar,
 } from 'lucide-react';
 import logo from '../assets/logo.png';
 import useAuthStore from '../stores/authStore';

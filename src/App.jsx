@@ -70,6 +70,11 @@ function App() {
     );
   }
 
+  // Add error logging for debugging
+  if (error) {
+    console.error('App error:', error);
+  }
+
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
