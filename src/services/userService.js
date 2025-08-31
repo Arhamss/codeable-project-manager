@@ -38,9 +38,11 @@ class UserService {
         email: user.email,
         name: userData.name || '',
         role: userData.role || USER_ROLES.USER,
+        position: userData.position || '',
         department: userData.department || '',
         phone: userData.phone || '',
         hourlyRate: userData.hourlyRate || 0,
+        monthlySalary: userData.monthlySalary || 0,
         isActive: true,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -78,6 +80,11 @@ class UserService {
       console.error('Error fetching users:', error);
       throw error;
     }
+  }
+
+  // Get users (alias for getAllUsers for consistency)
+  async getUsers() {
+    return this.getAllUsers();
   }
 
   // Get user by ID

@@ -24,7 +24,7 @@ import toast from 'react-hot-toast';
 
 const projectSchema = z.object({
   name: z.string().min(2, 'Project name must be at least 2 characters'),
-  description: z.string().min(10, 'Description must be at least 10 characters'),
+  description: z.string().optional(),
   client: z.string().optional(),
   status: z.enum(Object.values(PROJECT_STATUS)),
   projectType: z.enum(Object.values(PROJECT_TYPES)),
@@ -152,10 +152,15 @@ const ProjectModal = ({ isOpen, onClose, onSuccess, project = null }) => {
       try {
         setLoadingUsers(true);
         const usersData = await userService.getUsers();
-        setUsers(usersData.filter(user => user.isActive)); // Only active users
+        const activeUsers = usersData.filter(user => user.isActive !== false); // Include users where isActive is not explicitly false
+        setUsers(activeUsers);
+        
+        if (activeUsers.length === 0) {
+          toast.info('No users found. Please create some users first in the Users section.');
+        }
       } catch (error) {
         console.error('Error loading users:', error);
-        toast.error('Failed to load users');
+        toast.error('Failed to load users: ' + error.message);
       } finally {
         setLoadingUsers(false);
       }
@@ -550,6 +555,11 @@ const ProjectModal = ({ isOpen, onClose, onSuccess, project = null }) => {
                         <LoadingSpinner size="sm" />
                         <span className="ml-2 text-gray-400">Loading team members...</span>
                       </div>
+                    ) : users.length === 0 ? (
+                      <div className="text-center py-4">
+                        <p className="text-gray-400 mb-2">No users found</p>
+                        <p className="text-sm text-gray-500">Please create some users first in the Users section</p>
+                      </div>
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {Object.values(DEVELOPER_ROLES).map((role) => (
@@ -572,7 +582,7 @@ const ProjectModal = ({ isOpen, onClose, onSuccess, project = null }) => {
                               </option>
                               {users.map((user) => (
                                 <option key={user.id} value={user.id}>
-                                  {user.firstName} {user.lastName} - {user.email}
+                                  {user.name || `${user.firstName || ''} ${user.lastName || ''}`} - {user.email}
                                 </option>
                               ))}
                             </select>
