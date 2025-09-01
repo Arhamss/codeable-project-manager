@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useState, useEffect } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
@@ -20,9 +20,11 @@ const timeLogSchema = z.object({
   description: z.string().min(5, 'Description must be at least 5 characters')
 });
 
-const TimeLogModal = ({ isOpen, onClose, onSuccess, projects = [], preselectedProject = null }) => {
+const TimeLogModal = ({ isOpen, onClose, onSuccess, projects = [], preselectedProject = null, timeLog = null }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { userData } = useAuthStore();
+  
+  const isEditing = !!timeLog;
 
   // Filter projects to only show those where the user is assigned as a developer or admin
   const userAssignedProjects = projects.filter(project => {
@@ -60,12 +62,35 @@ const TimeLogModal = ({ isOpen, onClose, onSuccess, projects = [], preselectedPr
   } = useForm({
     resolver: zodResolver(timeLogSchema),
     defaultValues: {
-      projectId: preselectedProject?.id || '',
-      date: new Date(),
-      hours: 1,
-      workType: WORK_TYPES.OTHER
+      projectId: timeLog?.projectId || preselectedProject?.id || '',
+      date: timeLog?.date ? new Date(timeLog.date) : new Date(),
+      hours: timeLog?.hours || 1,
+      workType: timeLog?.workType || WORK_TYPES.OTHER,
+      description: timeLog?.description || ''
     }
   });
+
+  // Reset form when timeLog prop changes (for editing)
+  useEffect(() => {
+    if (timeLog) {
+      reset({
+        projectId: timeLog.projectId,
+        date: new Date(timeLog.date),
+        hours: timeLog.hours,
+        workType: timeLog.workType,
+        description: timeLog.description
+      });
+    } else if (!isOpen) {
+      // Reset to defaults when modal closes
+      reset({
+        projectId: preselectedProject?.id || '',
+        date: new Date(),
+        hours: 1,
+        workType: WORK_TYPES.OTHER,
+        description: ''
+      });
+    }
+  }, [timeLog, isOpen, reset, preselectedProject]);
 
   const selectedProjectId = watch('projectId');
   const selectedProject = userAssignedProjects.find(p => p.id === selectedProjectId);
@@ -82,13 +107,19 @@ const TimeLogModal = ({ isOpen, onClose, onSuccess, projects = [], preselectedPr
         createdBy: userData.id
       };
 
-      await projectService.logTime(timeLogData);
+      if (isEditing) {
+        // Update existing time log
+        await projectService.updateTimeLog(timeLog.id, timeLogData);
+      } else {
+        // Create new time log
+        await projectService.logTime(timeLogData);
+      }
       
       reset();
       onSuccess();
     } catch (error) {
-      console.error('Error logging time:', error);
-      toast.error('Failed to log time');
+      console.error('Error saving time log:', error);
+      toast.error(`Failed to ${isEditing ? 'update' : 'log'} time`);
     } finally {
       setIsSubmitting(false);
     }
@@ -131,7 +162,7 @@ const TimeLogModal = ({ isOpen, onClose, onSuccess, projects = [], preselectedPr
                 <div className="flex items-center justify-between mb-6">
                   <Dialog.Title className="text-lg font-semibold text-white flex items-center">
                     <Clock className="w-5 h-5 mr-2 text-primary-400" />
-                    Log Time
+                    {isEditing ? 'Edit Time Log' : 'Log Time'}
                   </Dialog.Title>
                   <button
                     onClick={handleClose}
@@ -311,7 +342,7 @@ const TimeLogModal = ({ isOpen, onClose, onSuccess, projects = [], preselectedPr
                       {isSubmitting ? (
                         <LoadingSpinner size="sm" color="white" />
                       ) : (
-                        'Log Time'
+                        isEditing ? 'Update Time Log' : 'Log Time'
                       )}
                     </button>
                   </div>
