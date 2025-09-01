@@ -245,6 +245,8 @@ class ProjectService {
   // Get time logs for a project
   async getProjectTimeLogs(projectId) {
     try {
+      console.log('Fetching time logs for project:', projectId);
+      
       const q = query(
         this.timeLogsCollection,
         where('projectId', '==', projectId),
@@ -252,12 +254,21 @@ class ProjectService {
       );
       
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate?.() || doc.data().createdAt,
-        updatedAt: doc.data().updatedAt?.toDate?.() || doc.data().updatedAt
-      }));
+      console.log('Time logs query result:', querySnapshot.docs.length, 'documents found');
+      
+      const timeLogs = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        console.log('Time log data:', { id: doc.id, projectId: data.projectId, hours: data.hours, date: data.date });
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt?.toDate?.() || data.createdAt,
+          updatedAt: data.updatedAt?.toDate?.() || data.updatedAt
+        };
+      });
+      
+      console.log('Processed time logs:', timeLogs);
+      return timeLogs;
     } catch (error) {
       console.error('Error fetching time logs:', error);
       throw error;
@@ -330,35 +341,47 @@ class ProjectService {
   // Get project analytics
   async getProjectAnalytics(projectId) {
     try {
+      console.log('Getting project analytics for:', projectId);
+      
       const [project, timeLogs] = await Promise.all([
         this.getProjectById(projectId),
         this.getProjectTimeLogs(projectId)
       ]);
 
+      console.log('Project data:', project);
+      console.log('Time logs received:', timeLogs);
+
       if (!project) return null;
 
       // Calculate analytics
-      const totalLoggedHours = timeLogs.reduce((total, log) => total + log.hours, 0);
-      const totalEstimatedHours = Object.values(project.estimatedHours || {}).reduce((total, hours) => total + hours, 0);
+      const totalLoggedHours = timeLogs.reduce((total, log) => total + (log.hours || 0), 0);
+      const totalEstimatedHours = Object.values(project.estimatedHours || {}).reduce((total, hours) => total + (hours || 0), 0);
       const remainingHours = Math.max(0, totalEstimatedHours - totalLoggedHours);
       const progressPercentage = totalEstimatedHours > 0 ? (totalLoggedHours / totalEstimatedHours) * 100 : 0;
 
+      console.log('Calculated analytics:', {
+        totalLoggedHours,
+        totalEstimatedHours,
+        remainingHours,
+        progressPercentage
+      });
+
       // Hours by work type
       const hoursByWorkType = timeLogs.reduce((acc, log) => {
-        acc[log.workType] = (acc[log.workType] || 0) + log.hours;
+        acc[log.workType] = (acc[log.workType] || 0) + (log.hours || 0);
         return acc;
       }, {});
 
       // Hours by user
       const hoursByUser = timeLogs.reduce((acc, log) => {
-        acc[log.userId] = (acc[log.userId] || 0) + log.hours;
+        acc[log.userId] = (acc[log.userId] || 0) + (log.hours || 0);
         return acc;
       }, {});
 
       // Recent activity (get more logs for daily breakdown)
       const recentLogs = timeLogs.slice(0, 50);
 
-      return {
+      const analytics = {
         project,
         totalLoggedHours,
         totalEstimatedHours,
@@ -369,6 +392,9 @@ class ProjectService {
         recentLogs,
         timeLogsCount: timeLogs.length
       };
+
+      console.log('Final analytics object:', analytics);
+      return analytics;
     } catch (error) {
       console.error('Error getting project analytics:', error);
       throw error;
