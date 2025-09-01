@@ -17,6 +17,7 @@ import { USER_ROLES, DEPARTMENTS } from '../types';
  * @property {string} role - User role ('admin' | 'user')
  * @property {string} department - User's department (optional)
  * @property {string} phone - User's phone number (optional)
+ * @property {string} companyId - Employee ID (e.g., C001) (optional)
  * @property {number} hourlyRate - User's hourly rate (optional, default: 0)
  * @property {boolean} isActive - Whether the user account is active
  * @property {string} profilePicture - URL to profile picture (optional)
@@ -33,6 +34,7 @@ export const defaultUserData = {
   role: USER_ROLES.USER,
   department: '',
   phone: '',
+  companyId: '',
   hourlyRate: 0,
   isActive: true,
   profilePicture: null,
@@ -53,6 +55,7 @@ export const createUserDocument = (userData, email) => {
     role: userData.role || USER_ROLES.USER,
     department: userData.department || '',
     phone: userData.phone || '',
+    companyId: userData.companyId || '',
     hourlyRate: userData.hourlyRate || 0,
     isActive: true,
     profilePicture: null,
@@ -118,6 +121,7 @@ export const validateUserData = (userData) => {
  *   role: "user",
  *   department: "web",
  *   phone: "+1234567890",
+ *   companyId: "C001",
  *   hourlyRate: 75,
  *   isActive: true,
  *   profilePicture: null,

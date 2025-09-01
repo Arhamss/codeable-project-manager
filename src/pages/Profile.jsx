@@ -51,6 +51,7 @@ const Profile = () => {
   useEffect(() => {
     if (userData) {
       console.log('Resetting form with userData:', userData);
+      console.log('CompanyId value:', userData.companyId);
       reset({
         name: userData.name || '',
         email: userData.email || '',
