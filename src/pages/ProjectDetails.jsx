@@ -470,9 +470,16 @@ const ProjectDetails = () => {
                     dailyLogs[date][log.workType] += log.hours;
                   });
 
+                  // Generate all 7 days of the week, even if no logs exist
+                  const allWeekDays = [];
+                  for (let i = 0; i < 7; i++) {
+                    const currentDate = new Date(targetWeekStart);
+                    currentDate.setDate(targetWeekStart.getDate() + i);
+                    allWeekDays.push(currentDate);
+                  }
+
                   // Helper function to format date with ordinal suffix
-                  const formatDateWithOrdinal = (dateString) => {
-                    const date = new Date(dateString);
+                  const formatDateWithOrdinal = (date) => {
                     const day = date.getDate();
                     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
                     const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -491,9 +498,6 @@ const ProjectDetails = () => {
                     return `${dayNames[date.getDay()]}, ${day}${getOrdinalSuffix(day)} ${monthNames[date.getMonth()]} ${date.getFullYear()}`;
                   };
 
-                  // Sort dates
-                  const sortedDates = Object.keys(dailyLogs).sort((a, b) => new Date(a) - new Date(b));
-
                   // Work type colors
                   const workTypeColors = {
                     'backend': 'bg-blue-500',
@@ -507,9 +511,13 @@ const ProjectDetails = () => {
                     'other': 'bg-orange-500'
                   };
 
-                  if (sortedDates.length === 0) {
+                  // Check if there are any logs for the week
+                  const hasAnyLogs = Object.keys(dailyLogs).length > 0;
+
+                  // If no logs exist for the entire week, show empty state
+                  if (!hasAnyLogs) {
                     return (
-                      <div className="text-center py-8">
+                      <div key="no-logs" className="text-center py-8">
                         <Clock className="w-12 h-12 text-gray-600 mx-auto mb-3" />
                         <p className="text-gray-400">
                           No time logs recorded for {currentWeekOffset === 0 ? 'this week' : 'this week'}
@@ -526,43 +534,65 @@ const ProjectDetails = () => {
                     );
                   }
 
-                  return sortedDates.map(date => {
-                    const dayLogs = dailyLogs[date];
+                  return allWeekDays.map((date, index) => {
+                    const dateString = date.toLocaleDateString();
+                    const dayLogs = dailyLogs[dateString] || {};
                     const totalDayHours = Object.values(dayLogs).reduce((sum, hours) => sum + hours, 0);
 
                     return (
                       <motion.div 
-                        key={date} 
-                        className="space-y-2 p-3 bg-dark-800 rounded-lg border border-dark-700"
+                        key={dateString} 
+                        className={`space-y-2 p-3 rounded-lg border transition-all duration-300 ${
+                          totalDayHours > 0 
+                            ? 'bg-dark-800 border-dark-700' 
+                            : 'bg-dark-800/50 border-dark-700/50'
+                        }`}
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.3 }}
+                        transition={{ duration: 0.3, delay: index * 0.1 }}
                       >
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-300 font-medium">{formatDateWithOrdinal(date)}</span>
-                          <span className="text-white font-bold text-lg">{totalDayHours}h</span>
+                          <span className={`font-medium ${
+                            totalDayHours > 0 ? 'text-gray-300' : 'text-gray-500'
+                          }`}>
+                            {formatDateWithOrdinal(date)}
+                          </span>
+                          <span className={`font-bold text-lg ${
+                            totalDayHours > 0 ? 'text-white' : 'text-gray-500'
+                          }`}>
+                            {totalDayHours > 0 ? `${totalDayHours}h` : '0h'}
+                          </span>
                         </div>
-                        <div className="w-full bg-dark-700 rounded-full h-4 flex overflow-hidden">
-                          {Object.entries(dayLogs).map(([workType, hours], index) => {
-                            const percentage = totalDayHours > 0 ? (hours / totalDayHours) * 100 : 0;
-                            return (
-                              <div
-                                key={workType}
-                                className={`${workTypeColors[workType] || 'bg-gray-500'} h-full transition-all duration-300`}
-                                style={{ width: `${percentage}%` }}
-                                title={`${getWorkTypeLabel(workType)}: ${hours}h`}
-                              />
-                            );
-                          })}
-                        </div>
-                        <div className="flex flex-wrap gap-2 text-xs">
-                          {Object.entries(dayLogs).map(([workType, hours]) => (
-                            <div key={workType} className="flex items-center space-x-1">
-                              <div className={`w-2 h-2 rounded-full ${workTypeColors[workType] || 'bg-gray-500'}`} />
-                              <span className="text-gray-400">{getWorkTypeLabel(workType)}: {hours}h</span>
+                        
+                        {totalDayHours > 0 ? (
+                          <>
+                            <div className="w-full bg-dark-700 rounded-full h-4 flex overflow-hidden">
+                              {Object.entries(dayLogs).map(([workType, hours], index) => {
+                                const percentage = totalDayHours > 0 ? (hours / totalDayHours) * 100 : 0;
+                                return (
+                                  <div
+                                    key={workType}
+                                    className={`${workTypeColors[workType] || 'bg-gray-500'} h-full transition-all duration-300`}
+                                    style={{ width: `${percentage}%` }}
+                                    title={`${getWorkTypeLabel(workType)}: ${hours}h`}
+                                  />
+                                );
+                              })}
                             </div>
-                          ))}
-                        </div>
+                            <div className="flex flex-wrap gap-2 text-xs">
+                              {Object.entries(dayLogs).map(([workType, hours]) => (
+                                <div key={workType} className="flex items-center space-x-1">
+                                  <div className={`w-2 h-2 rounded-full ${workTypeColors[workType] || 'bg-gray-500'}`} />
+                                  <span className="text-gray-400">{getWorkTypeLabel(workType)}: {hours}h</span>
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        ) : (
+                          <div className="text-center py-2">
+                            <span className="text-gray-500 text-sm">No hours logged</span>
+                          </div>
+                        )}
                       </motion.div>
                     );
                   });

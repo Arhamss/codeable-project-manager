@@ -9,7 +9,8 @@ import {
   Plus,
   Timer,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  FileText
 } from 'lucide-react';
 import DashboardLayout from '../layouts/DashboardLayout';
 import useAuthStore from '../stores/authStore';
@@ -343,7 +344,7 @@ const Dashboard = () => {
                       
                       <p className="text-gray-400 text-sm mb-2 line-clamp-2">
                         {log.description}
-                      </p>
+                        </p>
                       
                       <div className="flex items-center justify-between text-xs text-gray-500">
                         <span className="bg-dark-700 px-2 py-1 rounded">
@@ -368,6 +369,81 @@ const Dashboard = () => {
                   </button>
                 </div>
               )}
+            </div>
+          </motion.div>
+
+          {/* Company Policies */}
+          <motion.div
+            variants={cardVariants}
+            initial="hidden"
+            animate="visible"
+            transition={{ delay: 0.6 }}
+            className="card"
+          >
+            <div className="card-header">
+              <h3 className="text-lg font-semibold text-white">Company Policies</h3>
+              <p className="text-gray-400 text-sm">Important company guidelines and policies</p>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-4 bg-dark-800 rounded-lg border border-dark-700 hover:border-primary-500 transition-colors">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                      <FileText className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-white text-sm">Employment Policy</h4>
+                      <p className="text-gray-400 text-xs">Core employment guidelines</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="p-4 bg-dark-800 rounded-lg border border-dark-700 hover:border-primary-500 transition-colors">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                      <FileText className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-white text-sm">Leave Policy</h4>
+                      <p className="text-gray-400 text-xs">Time off and leave guidelines</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="p-4 bg-dark-800 rounded-lg border border-dark-700 hover:border-primary-500 transition-colors">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center">
+                      <FileText className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-white text-sm">Remote Work</h4>
+                      <p className="text-gray-400 text-xs">Remote work guidelines</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="p-4 bg-dark-800 rounded-lg border border-dark-700 hover:border-primary-500 transition-colors">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-yellow-500 rounded-lg flex items-center justify-center">
+                      <FileText className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-white text-sm">Equipment Policy</h4>
+                      <p className="text-gray-400 text-xs">IT and equipment guidelines</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="text-center pt-2">
+                <button
+                  onClick={() => navigate('/policies')}
+                  className="text-primary-400 hover:text-primary-300 text-sm transition-colors"
+                >
+                  View All Policies →
+                </button>
+              </div>
             </div>
           </motion.div>
         </div>

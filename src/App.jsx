@@ -20,6 +20,8 @@ import LeaveManagement from './pages/LeaveManagement';
 import MyLeaves from './pages/MyLeaves';
 import ProjectDetails from './pages/ProjectDetails';
 import Profile from './pages/Profile';
+import Policies from './pages/Policies';
+import AdminPolicies from './pages/AdminPolicies';
 import NotFound from './pages/NotFound';
 
 // Components
@@ -163,6 +165,15 @@ function App() {
               />
               
               <Route 
+                path="/admin/policies" 
+                element={
+                  <ProtectedRoute requireAdmin={true}>
+                    <AdminPolicies />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
                 path="/user/projects" 
                 element={
                   <ProtectedRoute>
@@ -185,6 +196,15 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <MyLeaves />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/policies" 
+                element={
+                  <ProtectedRoute>
+                    <Policies />
                   </ProtectedRoute>
                 } 
               />

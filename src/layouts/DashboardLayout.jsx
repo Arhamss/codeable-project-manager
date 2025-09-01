@@ -65,6 +65,12 @@ const DashboardLayout = ({ children }) => {
         href: '/admin/leaves',
         icon: Calendar,
         active: location.pathname.startsWith('/admin/leaves')
+      },
+      {
+        name: 'Policies',
+        href: '/admin/policies',
+        icon: FileText,
+        active: location.pathname.startsWith('/admin/policies')
       }
     ] : [
       {
@@ -84,6 +90,12 @@ const DashboardLayout = ({ children }) => {
         href: '/user/leaves',
         icon: Calendar,
         active: location.pathname.startsWith('/user/leaves')
+      },
+      {
+        name: 'Policies',
+        href: '/policies',
+        icon: FileText,
+        active: location.pathname.startsWith('/policies')
       }
     ]),
     {
