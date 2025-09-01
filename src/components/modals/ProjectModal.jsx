@@ -21,6 +21,7 @@ import {
 } from '../../types';
 import { projectService } from '../../services/projectService';
 import { userService } from '../../services/userService';
+import RichTextEditor from '../ui/RichTextEditor';
 import LoadingSpinner from '../ui/LoadingSpinner';
 import toast from 'react-hot-toast';
 
@@ -500,13 +501,12 @@ const ProjectModal = ({ isOpen, onClose, onSuccess, project = null }) => {
                         <label className="block text-sm font-medium text-gray-300 mb-2">
                           Description *
                         </label>
-                        <textarea
-                          {...register('description')}
-                          rows={4}
-                          className={`input-primary w-full resize-none ${
-                            errors.description ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
-                          }`}
+                        <RichTextEditor
+                          value={watch('description') || ''}
+                          onChange={(value) => setValue('description', value)}
                           placeholder="Describe the project..."
+                          rows={4}
+                          error={!!errors.description}
                         />
                         {errors.description && (
                           <p className="mt-1 text-sm text-red-500">{errors.description.message}</p>

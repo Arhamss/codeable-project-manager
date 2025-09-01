@@ -39,7 +39,7 @@ const adminUserCreationSchema = z.object({
   department: z.string().optional(),
   phone: z.string().optional(),
   monthlySalary: z.number().min(0, 'Monthly salary must be positive'),
-  parentPin: z.string().min(4, 'Parent PIN is required')
+  adminPin: z.string().min(4, 'Admin PIN is required')
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ['confirmPassword']
@@ -48,7 +48,7 @@ const adminUserCreationSchema = z.object({
 const AdminUserCreationModal = ({ isOpen, onClose, onSuccess }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [showParentPin, setShowParentPin] = useState(false);
+      const [showAdminPin, setShowAdminPin] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { createUser } = useAuthStore();
 
@@ -75,15 +75,15 @@ const AdminUserCreationModal = ({ isOpen, onClose, onSuccess }) => {
     try {
       setIsSubmitting(true);
       
-      // Verify parent PIN (you can store this in environment variables or secure config)
-      const validParentPin = import.meta.env.VITE_PARENT_PIN || '1234'; // Default for development
-      
-      if (data.parentPin !== validParentPin) {
-        toast.error('Invalid parent PIN');
-        return;
-      }
+          // Verify admin PIN (you can store this in environment variables or secure config)
+    const validAdminPin = import.meta.env.VITE_PARENT_PIN || '1234'; // Default for development
+    
+        if (data.adminPin !== validAdminPin) {
+      toast.error('Invalid admin PIN');
+      return;
+    }
 
-      const { confirmPassword, parentPin, ...userData } = data;
+    const { confirmPassword, adminPin, ...userData } = data;
       
       const result = await createUser(data.email, data.password, userData);
       
@@ -407,38 +407,38 @@ const AdminUserCreationModal = ({ isOpen, onClose, onSuccess }) => {
                       </p>
                     </div>
 
-                    {/* Parent PIN Field */}
+                    {/* Admin PIN Field */}
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Parent PIN *
+                        Admin PIN *
                       </label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                           <Key className="h-4 w-4 text-gray-400" />
                         </div>
                         <input
-                          {...register('parentPin')}
-                          type={showParentPin ? 'text' : 'password'}
+                                          {...register('adminPin')}
+                type={showAdminPin ? 'text' : 'password'}
                           className={`input-primary pl-10 pr-10 w-full ${
-                            errors.parentPin ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
+                            errors.adminPin ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
                           }`}
-                          placeholder="Enter parent PIN"
+                          placeholder="Enter admin PIN"
                         />
                         <button
                           type="button"
                           className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                          onClick={() => setShowParentPin(!showParentPin)}
+                          onClick={() => setShowAdminPin(!showAdminPin)}
                         >
-                          {showParentPin ? (
-                            <EyeOff className="h-4 w-4 text-gray-400 hover:text-gray-300" />
-                          ) : (
-                            <Eye className="h-4 w-4 text-gray-400 hover:text-gray-300" />
-                          )}
+                                          {showAdminPin ? (
+                  <EyeOff className="h-4 w-4 text-gray-400 hover:text-gray-300" />
+                ) : (
+                  <Eye className="h-4 w-4 text-gray-400 hover:text-gray-300" />
+                )}
                         </button>
                       </div>
-                      {errors.parentPin && (
-                        <p className="mt-1 text-sm text-red-500">{errors.parentPin.message}</p>
-                      )}
+                                  {errors.adminPin && (
+              <p className="mt-1 text-sm text-red-500">{errors.adminPin.message}</p>
+            )}
                       <p className="text-xs text-gray-500 mt-1">
                         Required to verify admin authorization
                       </p>

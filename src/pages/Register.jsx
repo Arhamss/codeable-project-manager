@@ -26,7 +26,7 @@ const registerSchema = z.object({
   role: z.enum([USER_ROLES.USER, USER_ROLES.ADMIN]),
   department: z.string().optional(),
   phone: z.string().optional(),
-        parentPin: z.string().min(4, 'Admin PIN is required')
+        adminPin: z.string().min(4, 'Admin PIN is required')
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ['confirmPassword']
@@ -35,7 +35,7 @@ const registerSchema = z.object({
 const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [showParentPin, setShowParentPin] = useState(false);
+      const [showAdminPin, setShowAdminPin] = useState(false);
   const { register: registerUser, isLoading, isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
 
@@ -66,13 +66,13 @@ const Register = () => {
       // Verify admin PIN
       const validAdminPin = import.meta.env.VITE_PARENT_PIN || '1094';
       
-      if (data.parentPin !== validAdminPin) {
+      if (data.adminPin !== validAdminPin) {
         toast.error('Invalid admin PIN. Only administrators can create accounts.');
         return;
       }
 
       // Force role to be admin for public registration
-      const { confirmPassword, parentPin, ...registerData } = data;
+      const { confirmPassword, adminPin, ...registerData } = data;
       registerData.role = USER_ROLES.ADMIN;
       
       const result = await registerUser(data.email, data.password, registerData);
@@ -288,7 +288,7 @@ const Register = () => {
 
             {/* Admin PIN Field */}
             <div>
-              <label htmlFor="parentPin" className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="adminPin" className="block text-sm font-medium text-gray-300 mb-2">
                 Admin PIN *
               </label>
               <div className="relative">
@@ -296,27 +296,27 @@ const Register = () => {
                   <Key className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  {...register('parentPin')}
-                  type={showParentPin ? 'text' : 'password'}
+                  {...register('adminPin')}
+                  type={showAdminPin ? 'text' : 'password'}
                   className={`input-primary pl-10 pr-10 w-full ${
-                    errors.parentPin ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
+                    errors.adminPin ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
                   }`}
                   placeholder="Enter admin PIN"
                 />
                 <button
                   type="button"
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={() => setShowParentPin(!showParentPin)}
+                  onClick={() => setShowAdminPin(!showAdminPin)}
                 >
-                  {showParentPin ? (
+                  {showAdminPin ? (
                     <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-300" />
                   ) : (
                     <Eye className="h-5 w-5 text-gray-400 hover:text-gray-300" />
                   )}
                 </button>
               </div>
-              {errors.parentPin && (
-                <p className="mt-1 text-sm text-red-500">{errors.parentPin.message}</p>
+              {errors.adminPin && (
+                <p className="mt-1 text-sm text-red-500">{errors.adminPin.message}</p>
               )}
               <p className="text-xs text-gray-500 mt-1">
                 Required to verify administrator authorization

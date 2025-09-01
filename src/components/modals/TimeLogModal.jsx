@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { X, Clock, Calendar, FileText, Briefcase } from 'lucide-react';
 import CustomDatePicker from '../ui/DatePicker';
+import RichTextEditor from '../ui/RichTextEditor';
 import { WORK_TYPES, getWorkTypeLabel } from '../../types';
 import { projectService } from '../../services/projectService';
 import useAuthStore from '../../stores/authStore';
@@ -255,19 +256,13 @@ const TimeLogModal = ({ isOpen, onClose, onSuccess, projects = [], preselectedPr
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       Description *
                     </label>
-                    <div className="relative">
-                      <div className="absolute top-3 left-3 pointer-events-none">
-                        <FileText className="h-4 w-4 text-gray-400" />
-                      </div>
-                      <textarea
-                        {...register('description')}
-                        rows={3}
-                        className={`input-primary pl-10 w-full resize-none ${
-                          errors.description ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
-                        }`}
-                        placeholder="Describe what you worked on..."
-                      />
-                    </div>
+                    <RichTextEditor
+                      value={watch('description') || ''}
+                      onChange={(value) => setValue('description', value)}
+                      placeholder="Describe what you worked on..."
+                      rows={3}
+                      error={!!errors.description}
+                    />
                     {errors.description && (
                       <p className="mt-1 text-sm text-red-500">{errors.description.message}</p>
                     )}

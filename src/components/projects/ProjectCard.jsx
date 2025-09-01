@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { getProjectStatusLabel, getProjectTypeLabel, PROJECT_STATUS, PROJECT_TYPES, REVENUE_TYPE } from '../../types';
+import FormattedText from '../ui/FormattedText';
 
 const ProjectCard = ({ 
   project, 
@@ -179,9 +180,16 @@ const ProjectCard = ({
       </div>
 
       {/* Description */}
-      <p className="text-gray-400 text-sm mb-4 line-clamp-2">
-        {project.description}
-      </p>
+      {project.description ? (
+        <div className="mb-4">
+          <FormattedText 
+            text={project.description} 
+            className="text-gray-400 text-sm line-clamp-2" 
+          />
+        </div>
+      ) : (
+        <p className="text-gray-500 text-sm mb-4 italic">No description provided</p>
+      )}
 
       {/* Progress Bar */}
       <div className="mb-4">

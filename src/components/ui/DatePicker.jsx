@@ -23,8 +23,11 @@ const CustomDatePicker = ({
   };
 
   const handleDateChange = (date) => {
-    onChange(date);
-    setIsOpen(false);
+    // Only call onChange if we have a valid date
+    if (date && date instanceof Date && !isNaN(date.getTime())) {
+      onChange(date);
+      setIsOpen(false);
+    }
   };
 
   const formatDate = (date) => {
@@ -130,12 +133,26 @@ const CustomDatePicker = ({
         dateFormat="dd/MM/yyyy"
         showPopperArrow={false}
         popperClassName="custom-datepicker-popper"
-        popperPlacement="bottom-start"
+        popperPlacement="auto"
+        portalId="datepicker-portal"
         popperModifiers={[
           {
             name: 'offset',
             options: {
               offset: [0, 8],
+            },
+          },
+          {
+            name: 'preventOverflow',
+            options: {
+              boundary: 'viewport',
+              padding: 8,
+            },
+          },
+          {
+            name: 'flip',
+            options: {
+              fallbackPlacements: ['top-start', 'bottom-start', 'top-end', 'bottom-end'],
             },
           },
         ]}
@@ -144,7 +161,11 @@ const CustomDatePicker = ({
       
       <style jsx>{`
         .custom-datepicker-popper {
-          z-index: 9999 !important;
+          z-index: 99999 !important;
+        }
+        
+        .react-datepicker-popper {
+          z-index: 99999 !important;
         }
         
         .react-datepicker {
@@ -230,6 +251,29 @@ const CustomDatePicker = ({
         .react-datepicker__week {
           display: flex !important;
           justify-content: center !important;
+        }
+        
+        /* Ensure date picker is always visible */
+        .react-datepicker-wrapper {
+          position: relative !important;
+        }
+        
+        .react-datepicker__input-container {
+          position: relative !important;
+        }
+        
+        /* Force date picker to be above all other elements */
+        .react-datepicker-popper[data-popper-placement^="top"] {
+          z-index: 99999 !important;
+        }
+        
+        .react-datepicker-popper[data-popper-placement^="bottom"] {
+          z-index: 99999 !important;
+        }
+        
+        /* Ensure proper positioning in modals */
+        .react-datepicker-popper {
+          position: fixed !important;
         }
       `}</style>
     </div>

@@ -18,6 +18,7 @@ import { projectService } from '../services/projectService';
 import { getWorkTypeLabel, PROJECT_STATUS } from '../types';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import TimeLogModal from '../components/modals/TimeLogModal';
+import FormattedText from '../components/ui/FormattedText';
 
 import toast from 'react-hot-toast';
 

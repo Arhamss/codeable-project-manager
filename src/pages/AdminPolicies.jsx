@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { FileText, Plus, Search, Edit, Trash2, Upload, Calendar, User, Eye } from 'lucide-react';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { policiesService } from '../services/policiesService';
+import FormattedText from '../components/ui/FormattedText';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import toast from 'react-hot-toast';
 import { formatDateWithOrdinal } from '../utils/dateUtils';
@@ -254,7 +255,10 @@ const AdminPolicies = () => {
                             <div className="text-sm font-medium text-white truncate">{policy.title}</div>
                             {policy.description && (
                               <div className="text-sm text-gray-400 line-clamp-1 mt-1">
-                                {policy.description}
+                                <FormattedText 
+                                  text={policy.description} 
+                                  className="line-clamp-1" 
+                                />
                               </div>
                             )}
                           </div>

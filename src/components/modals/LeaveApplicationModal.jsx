@@ -50,7 +50,8 @@ const LeaveApplicationModal = ({ isOpen, onClose, onSuccess }) => {
     reset,
     watch,
     setValue,
-    setError
+    setError,
+    clearErrors
   } = useForm({
     resolver: zodResolver(leaveApplicationSchema),
     defaultValues: {
@@ -80,10 +81,15 @@ const LeaveApplicationModal = ({ isOpen, onClose, onSuccess }) => {
       if (watchedEndDate >= watchedStartDate) {
         const diffTime = Math.abs(watchedEndDate - watchedStartDate);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end dates
-        setValue('duration', diffDays);
+        setValue('duration', diffDays, { shouldValidate: false });
+        
+        // Clear any existing date-related errors when dates are valid
+        if (errors.startDate) clearErrors('startDate');
+        if (errors.endDate) clearErrors('endDate');
+        if (errors.duration) clearErrors('duration');
       }
     }
-  }, [watchedStartDate, watchedEndDate, setValue]);
+  }, [watchedStartDate, watchedEndDate, setValue, errors, clearErrors]);
 
   // Check if leave exceeds balance
   useEffect(() => {
@@ -310,7 +316,19 @@ const LeaveApplicationModal = ({ isOpen, onClose, onSuccess }) => {
                           </label>
                           <CustomDatePicker
                             selected={watchedStartDate}
-                            onChange={(date) => setValue('startDate', date)}
+                            onChange={(date) => {
+                              if (date && date instanceof Date && !isNaN(date.getTime())) {
+                                setValue('startDate', date, { shouldValidate: true });
+                                // Clear end date error if start date is now valid
+                                if (errors.endDate) {
+                                  clearErrors('endDate');
+                                }
+                                // Clear start date error
+                                if (errors.startDate) {
+                                  clearErrors('startDate');
+                                }
+                              }
+                            }}
                             placeholderText="Select start date"
                             className={errors.startDate ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}
                           />
@@ -325,7 +343,19 @@ const LeaveApplicationModal = ({ isOpen, onClose, onSuccess }) => {
                           </label>
                           <CustomDatePicker
                             selected={watchedEndDate}
-                            onChange={(date) => setValue('endDate', date)}
+                            onChange={(date) => {
+                              if (date && date instanceof Date && !isNaN(date.getTime())) {
+                                setValue('endDate', date, { shouldValidate: true });
+                                // Clear start date error if end date is now valid
+                                if (errors.startDate) {
+                                  clearErrors('startDate');
+                                }
+                                // Clear end date error
+                                if (errors.endDate) {
+                                  clearErrors('endDate');
+                                }
+                              }
+                            }}
                             minDate={watchedStartDate}
                             placeholderText="Select end date"
                             className={errors.endDate ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}

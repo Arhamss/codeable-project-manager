@@ -21,6 +21,7 @@ import useAuthStore from '../stores/authStore';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import TimeLogModal from '../components/modals/TimeLogModal';
 import ProjectModal from '../components/modals/ProjectModal';
+import FormattedText from '../components/ui/FormattedText';
 import toast from 'react-hot-toast';
 
 const ProjectDetails = () => {
@@ -339,8 +340,12 @@ const ProjectDetails = () => {
                 </div>
 
                 <div>
-                  <p className="text-gray-400 text-sm mb-2">Description</p>
-                  <p className="text-white">{project.description}</p>
+                                      <p className="text-gray-400 text-sm mb-2">Description</p>
+                    {project.description ? (
+                      <FormattedText text={project.description} className="text-white" />
+                    ) : (
+                      <p className="text-gray-500 italic">No description provided</p>
+                    )}
                 </div>
 
                 {(project.startDate || project.endDate) && (
@@ -719,7 +724,7 @@ const ProjectDetails = () => {
                         <span className="text-white font-medium">{log.userName}</span>
                         <span className="text-primary-400 text-sm">{log.hours}h</span>
                       </div>
-                      <p className="text-gray-400 text-sm mb-1">{log.description}</p>
+                                              <FormattedText text={log.description} className="text-gray-400 text-sm" />
                       <div className="flex justify-between text-xs text-gray-500">
                         <span>{getWorkTypeLabel(log.workType)}</span>
                         <span>{new Date(log.date).toLocaleDateString()}</span>
