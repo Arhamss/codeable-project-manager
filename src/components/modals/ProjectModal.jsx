@@ -106,7 +106,6 @@ const ProjectModal = ({ isOpen, onClose, onSuccess, project = null }) => {
         [COST_CATEGORIES.BACKEND]: 0,
         [COST_CATEGORIES.FRONTEND_WEB]: 0,
         [COST_CATEGORIES.FRONTEND_MOBILE]: 0,
-        [COST_CATEGORIES.UI_DESIGN]: 0,
         [COST_CATEGORIES.DEPLOYMENT]: 0,
         [COST_CATEGORIES.OTHER]: 0
       },
@@ -114,7 +113,6 @@ const ProjectModal = ({ isOpen, onClose, onSuccess, project = null }) => {
         [DEVELOPER_ROLES.FRONTEND_MOBILE]: [],
         [DEVELOPER_ROLES.FRONTEND_WEB]: [],
         [DEVELOPER_ROLES.BACKEND]: [],
-        [DEVELOPER_ROLES.UI_DESIGNER]: [],
         [DEVELOPER_ROLES.TEAM_LEAD]: []
       }
     }
@@ -517,15 +515,55 @@ const ProjectModal = ({ isOpen, onClose, onSuccess, project = null }) => {
                     </div>
                   </div>
 
+                  {/* Design Cost Section */}
+                  <div className="space-y-4">
+                    <h3 className="text-md font-medium text-white border-b border-dark-700 pb-2">
+                      Design Cost (Outsourced)
+                    </h3>
+                    <div className="p-4 bg-blue-600/10 border border-blue-600/20 rounded-lg">
+                      <div className="flex items-start space-x-2 mb-3">
+                        <div className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
+                        <div>
+                          <p className="text-sm text-blue-300 font-medium">Outsourced Design Agency</p>
+                          <p className="text-xs text-blue-400 mt-1">
+                            UI/UX designs are outsourced to external agencies. Add the total design cost here.
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          Total Design Cost
+                        </label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <DollarSign className="h-4 w-4 text-gray-400" />
+                          </div>
+                          <input
+                            {...register(`costs.${COST_CATEGORIES.UI_DESIGN}`, { valueAsNumber: true })}
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            className="input-primary pl-10 w-full"
+                            placeholder="0.00"
+                          />
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          This cost will be deducted from project revenue when calculating profit
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Costs and Hours */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Costs */}
                     <div className="space-y-4">
                       <h3 className="text-md font-medium text-white border-b border-dark-700 pb-2">
-                        Expected Costs (Optional)
+                        Other Expected Costs (Optional)
                       </h3>
                       
-                      {Object.values(COST_CATEGORIES).map((category) => (
+                      {Object.values(COST_CATEGORIES).filter(category => category !== COST_CATEGORIES.UI_DESIGN).map((category) => (
                         <div key={category}>
                           <label className="block text-sm font-medium text-gray-300 mb-2">
                             {getCostCategoryLabel(category)} Cost
@@ -554,7 +592,7 @@ const ProjectModal = ({ isOpen, onClose, onSuccess, project = null }) => {
                         Estimated Hours
                       </h3>
                       
-                      {Object.values(COST_CATEGORIES).map((category) => (
+                      {Object.values(COST_CATEGORIES).filter(category => category !== COST_CATEGORIES.UI_DESIGN).map((category) => (
                         <div key={category}>
                           <label className="block text-sm font-medium text-gray-300 mb-2">
                             {getCostCategoryLabel(category)} Hours
@@ -575,6 +613,19 @@ const ProjectModal = ({ isOpen, onClose, onSuccess, project = null }) => {
                           <p className="text-xs text-gray-500 mt-1">Estimated hours for this category</p>
                         </div>
                       ))}
+                      
+                      {/* Design Hours Notice */}
+                      <div className="p-3 bg-gray-600/10 border border-gray-600/20 rounded-lg">
+                        <div className="flex items-start space-x-2">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
+                          <div>
+                            <p className="text-sm text-gray-300 font-medium">UI/UX Design Hours</p>
+                            <p className="text-xs text-gray-400 mt-1">
+                              Design hours are not tracked since designs are outsourced to external agencies.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -593,22 +644,35 @@ const ProjectModal = ({ isOpen, onClose, onSuccess, project = null }) => {
                         <p className="text-gray-400 mb-2">No users found</p>
                         <p className="text-sm text-gray-500">Please create some users first in the Users section</p>
                       </div>
-                    ) : (
-                      <div className="space-y-6">
-                        {Object.values(DEVELOPER_ROLES).map((role) => (
-                          <div key={role} className="space-y-3">
-                            <label className="block text-sm font-medium text-gray-300">
-                              {getDeveloperRoleLabel(role)}
-                              {role === DEVELOPER_ROLES.TEAM_LEAD && (
-                                <span className="text-red-400 ml-1">*</span>
-                              )}
-                              <span className="text-xs text-gray-500 ml-2">
-                                {role === DEVELOPER_ROLES.TEAM_LEAD 
-                                  ? '(Select one or more)' 
-                                  : '(Select multiple developers)'
-                                }
-                              </span>
-                            </label>
+                                          ) : (
+                        <div className="space-y-6">
+                          {/* UI Designer Notice */}
+                          <div className="p-3 bg-blue-600/10 border border-blue-600/20 rounded-lg mb-4">
+                            <div className="flex items-start space-x-2">
+                              <div className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
+                              <div>
+                                <p className="text-sm text-blue-300 font-medium">UI/UX Designer Role</p>
+                                <p className="text-xs text-blue-400 mt-1">
+                                  UI/UX design work is outsourced to external agencies. No internal designers need to be assigned.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {Object.values(DEVELOPER_ROLES).filter(role => role !== DEVELOPER_ROLES.UI_DESIGNER).map((role) => (
+                            <div key={role} className="space-y-3">
+                              <label className="block text-sm font-medium text-gray-300">
+                                {getDeveloperRoleLabel(role)}
+                                {role === DEVELOPER_ROLES.TEAM_LEAD && (
+                                  <span className="text-red-400 ml-1">*</span>
+                                )}
+                                <span className="text-xs text-gray-500 ml-2">
+                                  {role === DEVELOPER_ROLES.TEAM_LEAD 
+                                    ? '(Select one or more)' 
+                                    : '(Select multiple developers)'
+                                  }
+                                </span>
+                              </label>
                             
                             {/* Multi-select Dropdown with Chips */}
                             <div className="space-y-3">
