@@ -26,6 +26,7 @@ import {
   getLeaveStatusLabel,
   getLeaveStatusColor
 } from '../types';
+import { formatTableDate, formatDateRange } from '../utils/dateUtils';
 import LeaveApprovalModal from '../components/modals/LeaveApprovalModal';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import toast from 'react-hot-toast';
@@ -126,26 +127,7 @@ const LeaveManagement = () => {
     return matchesSearch && matchesStatus && matchesType;
   });
 
-  const formatDate = (date) => {
-    if (date instanceof Date) {
-      return date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-      });
-    }
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
 
-  const formatDateRange = (startDate, endDate) => {
-    const start = formatDate(startDate);
-    const end = formatDate(endDate);
-    return start === end ? start : `${start} - ${end}`;
-  };
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -397,7 +379,7 @@ const LeaveManagement = () => {
                         <div>
                           <p className="text-white font-medium">{leave.userName}</p>
                           <p className="text-sm text-gray-400">
-                            {getLeaveTypeLabel(leave.leaveType)} • {formatDate(leave.createdAt)}
+                            {getLeaveTypeLabel(leave.leaveType)} • {formatTableDate(leave.createdAt)}
                           </p>
                         </div>
                       </div>
@@ -545,7 +527,7 @@ const LeaveManagement = () => {
                           </td>
                           <td className="py-4 px-4">
                             <span className="text-sm text-gray-300">
-                              {formatDate(leave.createdAt)}
+                              {formatTableDate(leave.createdAt)}
                             </span>
                           </td>
                           <td className="py-4 px-4">

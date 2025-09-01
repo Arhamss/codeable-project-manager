@@ -27,6 +27,7 @@ import LeaveApplicationModal from '../components/modals/LeaveApplicationModal';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import toast from 'react-hot-toast';
 import useAuthStore from '../stores/authStore';
+import { formatTableDate, formatDateRange } from '../utils/dateUtils';
 
 const MyLeaves = () => {
   const [leaves, setLeaves] = useState([]);
@@ -77,6 +78,27 @@ const MyLeaves = () => {
     loadLeaveBalance();
   };
 
+  const handleViewDetails = (leave) => {
+    // For now, just show a toast with leave details
+    // In the future, this could open a detailed modal
+    toast.success(`Leave Details: ${leave.leaveType} for ${leave.duration} days`);
+  };
+
+  const handleCancelLeave = async (leaveId) => {
+    try {
+      const confirmed = window.confirm('Are you sure you want to cancel this leave application?');
+      if (!confirmed) return;
+
+      await leaveService.cancelLeave(leaveId, userData.id);
+      toast.success('Leave application cancelled successfully');
+      loadLeaves();
+      loadLeaveBalance();
+    } catch (error) {
+      console.error('Error cancelling leave:', error);
+      toast.error('Failed to cancel leave application');
+    }
+  };
+
   const filteredLeaves = leaves.filter(leave => {
     const matchesSearch = 
       leave.reason?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -87,26 +109,7 @@ const MyLeaves = () => {
     return matchesSearch && matchesStatus && matchesType;
   });
 
-  const formatDate = (date) => {
-    if (date instanceof Date) {
-      return date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-      });
-    }
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
 
-  const formatDateRange = (startDate, endDate) => {
-    const start = formatDate(startDate);
-    const end = formatDate(endDate);
-    return start === end ? start : `${start} - ${end}`;
-  };
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -324,12 +327,13 @@ const MyLeaves = () => {
                       </td>
                       <td className="py-4 px-4">
                         <span className="text-sm text-gray-300">
-                          {formatDate(leave.createdAt)}
+                          {formatTableDate(leave.createdAt)}
                         </span>
                       </td>
                       <td className="py-4 px-4">
                         <div className="flex items-center space-x-2">
                           <button
+                            onClick={() => handleViewDetails(leave)}
                             className="p-1 text-gray-400 hover:text-primary-400 transition-colors"
                             title="View Details"
                           >
@@ -337,6 +341,7 @@ const MyLeaves = () => {
                           </button>
                           {leave.status === LEAVE_STATUS.PENDING && (
                             <button
+                              onClick={() => handleCancelLeave(leave.id)}
                               className="p-1 text-gray-400 hover:text-red-400 transition-colors"
                               title="Cancel Application"
                             >

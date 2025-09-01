@@ -21,17 +21,16 @@ import {
   getLeaveTypeLabel,
   DEFAULT_LEAVE_ALLOCATION 
 } from '../../types';
+import CustomDatePicker from '../ui/DatePicker';
 
 const leaveApplicationSchema = z.object({
   leaveType: z.enum([LEAVE_TYPES.SICK, LEAVE_TYPES.CASUAL, LEAVE_TYPES.ANNUAL]),
-  startDate: z.string().min(1, 'Start date is required'),
-  endDate: z.string().min(1, 'End date is required'),
+  startDate: z.date({ required_error: 'Start date is required' }),
+  endDate: z.date({ required_error: 'End date is required' }),
   duration: z.number().min(0.5, 'Duration must be at least 0.5 days').max(30, 'Duration cannot exceed 30 days'),
   reason: z.string().min(10, 'Reason must be at least 10 characters').max(500, 'Reason cannot exceed 500 characters')
 }).refine((data) => {
-  const startDate = new Date(data.startDate);
-  const endDate = new Date(data.endDate);
-  return endDate >= startDate;
+  return data.endDate >= data.startDate;
 }, {
   message: "End date must be after or equal to start date",
   path: ["endDate"]
@@ -56,8 +55,8 @@ const LeaveApplicationModal = ({ isOpen, onClose, onSuccess }) => {
     resolver: zodResolver(leaveApplicationSchema),
     defaultValues: {
       leaveType: LEAVE_TYPES.CASUAL,
-      startDate: '',
-      endDate: '',
+      startDate: null,
+      endDate: null,
       duration: 1,
       reason: ''
     }
@@ -78,11 +77,8 @@ const LeaveApplicationModal = ({ isOpen, onClose, onSuccess }) => {
   // Calculate duration when dates change
   useEffect(() => {
     if (watchedStartDate && watchedEndDate) {
-      const startDate = new Date(watchedStartDate);
-      const endDate = new Date(watchedEndDate);
-      
-      if (endDate >= startDate) {
-        const diffTime = Math.abs(endDate - startDate);
+      if (watchedEndDate >= watchedStartDate) {
+        const diffTime = Math.abs(watchedEndDate - watchedStartDate);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end dates
         setValue('duration', diffDays);
       }
@@ -145,8 +141,8 @@ const LeaveApplicationModal = ({ isOpen, onClose, onSuccess }) => {
         userId: userData.id,
         userName: userData.name,
         leaveType: data.leaveType,
-        startDate: new Date(data.startDate),
-        endDate: new Date(data.endDate),
+        startDate: data.startDate,
+        endDate: data.endDate,
         duration: data.duration,
         reason: data.reason
       };
@@ -297,13 +293,12 @@ const LeaveApplicationModal = ({ isOpen, onClose, onSuccess }) => {
                         <label className="block text-sm font-medium text-gray-300 mb-2">
                           Start Date *
                         </label>
-                        <input
-                          {...register('startDate')}
-                          type="date"
-                          min={new Date().toISOString().split('T')[0]}
-                          className={`input-primary w-full ${
-                            errors.startDate ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
-                          }`}
+                        <CustomDatePicker
+                          selected={watchedStartDate}
+                          onChange={(date) => setValue('startDate', date)}
+                          minDate={new Date()}
+                          placeholderText="Select start date"
+                          className={errors.startDate ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}
                         />
                         {errors.startDate && (
                           <p className="mt-1 text-sm text-red-500">{errors.startDate.message}</p>
@@ -314,13 +309,12 @@ const LeaveApplicationModal = ({ isOpen, onClose, onSuccess }) => {
                         <label className="block text-sm font-medium text-gray-300 mb-2">
                           End Date *
                         </label>
-                        <input
-                          {...register('endDate')}
-                          type="date"
-                          min={watchedStartDate || new Date().toISOString().split('T')[0]}
-                          className={`input-primary w-full ${
-                            errors.endDate ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
-                          }`}
+                        <CustomDatePicker
+                          selected={watchedEndDate}
+                          onChange={(date) => setValue('endDate', date)}
+                          minDate={watchedStartDate || new Date()}
+                          placeholderText="Select end date"
+                          className={errors.endDate ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}
                         />
                         {errors.endDate && (
                           <p className="mt-1 text-sm text-red-500">{errors.endDate.message}</p>

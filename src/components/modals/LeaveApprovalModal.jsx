@@ -23,6 +23,7 @@ import {
   getLeaveStatusLabel,
   getLeaveStatusColor
 } from '../../types';
+import { formatDateWithOrdinal } from '../../utils/dateUtils';
 
 const leaveApprovalSchema = z.object({
   status: z.enum([LEAVE_STATUS.APPROVED, LEAVE_STATUS.REJECTED]),
@@ -84,22 +85,7 @@ const LeaveApprovalModal = ({ isOpen, onClose, onSuccess, leave }) => {
 
   if (!leave) return null;
 
-  const formatDate = (date) => {
-    if (date instanceof Date) {
-      return date.toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-    }
-    return new Date(date).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
+
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -188,11 +174,11 @@ const LeaveApprovalModal = ({ isOpen, onClose, onSuccess, leave }) => {
                       <div className="space-y-2">
                         <div className="flex justify-between">
                           <span className="text-sm text-gray-400">From:</span>
-                          <span className="text-sm text-white">{formatDate(leave.startDate)}</span>
+                          <span className="text-sm text-white">{formatDateWithOrdinal(leave.startDate)}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-sm text-gray-400">To:</span>
-                          <span className="text-sm text-white">{formatDate(leave.endDate)}</span>
+                          <span className="text-sm text-white">{formatDateWithOrdinal(leave.endDate)}</span>
                         </div>
                         <div className="flex justify-between border-t border-dark-600 pt-2">
                           <span className="text-sm text-gray-400">Duration:</span>
@@ -216,7 +202,7 @@ const LeaveApprovalModal = ({ isOpen, onClose, onSuccess, leave }) => {
                     <div className="p-3 bg-dark-700 rounded-lg">
                       <p className="text-xs text-gray-400 mb-1">Applied On</p>
                       <p className="text-sm text-white">
-                        {formatDate(leave.createdAt)}
+                        {formatDateWithOrdinal(leave.createdAt)}
                       </p>
                     </div>
                   </div>

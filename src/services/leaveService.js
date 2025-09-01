@@ -158,30 +158,32 @@ class LeaveService {
       const userData = userDoc.data();
       const leaveAllocation = userData.leaveAllocation || DEFAULT_LEAVE_ALLOCATION;
 
-      // Get user's approved leaves for the year
+      // Get user's approved and pending leaves for the year
       const startOfYear = new Date(year, 0, 1);
       const endOfYear = new Date(year, 11, 31);
 
       const q = query(
         collection(db, 'leaves'),
         where('userId', '==', userId),
-        where('status', '==', LEAVE_STATUS.APPROVED),
         where('startDate', '>=', startOfYear),
         where('startDate', '<=', endOfYear)
       );
       
       const querySnapshot = await getDocs(q);
-      const approvedLeaves = querySnapshot.docs.map(doc => doc.data());
+      const allLeaves = querySnapshot.docs.map(doc => doc.data());
 
-      // Calculate used leaves
+      // Calculate used leaves (including pending leaves)
       const usedLeaves = {
         [LEAVE_TYPES.SICK]: 0,
         [LEAVE_TYPES.CASUAL]: 0,
         [LEAVE_TYPES.ANNUAL]: 0
       };
 
-      approvedLeaves.forEach(leave => {
-        usedLeaves[leave.leaveType] += leave.duration;
+      allLeaves.forEach(leave => {
+        // Include both approved and pending leaves in the calculation
+        if (leave.status === LEAVE_STATUS.APPROVED || leave.status === LEAVE_STATUS.PENDING) {
+          usedLeaves[leave.leaveType] += leave.duration;
+        }
       });
 
       // Calculate remaining leaves
@@ -217,6 +219,41 @@ class LeaveService {
   calculateSalaryDeduction(monthlySalary, excessDays, workingDaysInMonth = 22) {
     const dailyRate = monthlySalary / workingDaysInMonth;
     return excessDays * dailyRate;
+  }
+
+  // Cancel leave application
+  async cancelLeave(leaveId, userId) {
+    try {
+      const leaveRef = doc(db, 'leaves', leaveId);
+      await updateDoc(leaveRef, {
+        status: LEAVE_STATUS.CANCELLED,
+        updatedAt: serverTimestamp()
+      });
+      return { success: true };
+    } catch (error) {
+      console.error('Error cancelling leave:', error);
+      throw error;
+    }
+  }
+
+  // Get leave details by ID
+  async getLeaveById(leaveId) {
+    try {
+      const leaveRef = doc(db, 'leaves', leaveId);
+      const leaveDoc = await getDoc(leaveRef);
+      
+      if (!leaveDoc.exists()) {
+        throw new Error('Leave not found');
+      }
+
+      return {
+        id: leaveDoc.id,
+        ...leaveDoc.data()
+      };
+    } catch (error) {
+      console.error('Error getting leave details:', error);
+      throw error;
+    }
   }
 
   // Get leave statistics for admin dashboard
