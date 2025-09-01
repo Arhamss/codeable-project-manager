@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { User, Mail, Phone, Building, Save, Lock } from 'lucide-react';
+import { User, Mail, Phone, Building, Save, Lock, Hash } from 'lucide-react';
 import DashboardLayout from '../layouts/DashboardLayout';
 import useAuthStore from '../stores/authStore';
 import { DEPARTMENTS, getDepartmentLabel } from '../types';
@@ -15,7 +15,14 @@ const profileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email address'),
   phone: z.string().optional(),
-  department: z.string().optional()
+  department: z.string().optional(),
+  companyId: z
+    .string()
+    .trim()
+    .optional()
+    .refine((val) => !val || /^C\d{3,}$/i.test(val), {
+      message: 'Company ID must look like C001 (optional)'
+    })
 });
 
 const Profile = () => {
@@ -34,7 +41,8 @@ const Profile = () => {
       name: '',
       email: '',
       phone: '',
-      department: ''
+      department: '',
+      companyId: ''
     }
   });
 
@@ -46,7 +54,8 @@ const Profile = () => {
         name: userData.name || '',
         email: userData.email || '',
         phone: userData.phone || '',
-        department: userData.department || ''
+        department: userData.department || '',
+        companyId: userData.companyId || ''
       });
     }
   }, [userData, reset]);
@@ -175,6 +184,29 @@ const Profile = () => {
                   placeholder="Enter your phone number"
                 />
               </div>
+            </div>
+
+            {/* Company ID (Optional) */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Company ID <span className="text-gray-500">(Optional)</span>
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Hash className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  {...register('companyId')}
+                  type="text"
+                  className={`input-primary pl-10 w-full ${
+                    errors.companyId ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
+                  }`}
+                  placeholder="e.g., C001"
+                />
+              </div>
+              {errors.companyId && (
+                <p className="mt-1 text-sm text-red-500">{errors.companyId.message}</p>
+              )}
             </div>
 
             {/* Department Field */}

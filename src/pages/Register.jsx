@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Eye, EyeOff, Lock, Mail, User, Key } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, User, Key, Building } from 'lucide-react';
 import logo from '../assets/logo.png';
 import useAuthStore from '../stores/authStore';
 import { USER_ROLES, DEPARTMENTS, getDepartmentLabel } from '../types';
@@ -13,6 +13,13 @@ import toast from 'react-hot-toast';
 
 const registerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
+  companyId: z
+    .string()
+    .trim()
+    .optional()
+    .refine((val) => !val || /^C\d{3,}$/i.test(val), {
+      message: 'Company ID must look like C001 (optional)'
+    }),
   email: z.string().email('Please enter a valid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   confirmPassword: z.string(),
@@ -41,7 +48,8 @@ const Register = () => {
   } = useForm({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      role: USER_ROLES.USER
+      role: USER_ROLES.USER,
+      companyId: ''
     }
   });
 
@@ -119,6 +127,28 @@ const Register = () => {
         >
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Name Field */}
+            {/* Company ID (Optional, Admins) */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Company ID <span className="text-gray-500">(Optional)</span>
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Building className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  {...register('companyId')}
+                  type="text"
+                  className={`input-primary pl-10 w-full ${
+                    errors.companyId ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
+                  }`}
+                  placeholder="e.g., C001 (leave empty if unsure)"
+                />
+              </div>
+              {errors.companyId && (
+                <p className="mt-1 text-sm text-red-500">{errors.companyId.message}</p>
+              )}
+            </div>
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
                 Full Name

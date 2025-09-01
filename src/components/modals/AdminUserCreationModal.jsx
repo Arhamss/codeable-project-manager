@@ -23,6 +23,13 @@ import { USER_ROLES, DEPARTMENTS, getDepartmentLabel, DEFAULT_LEAVE_ALLOCATION }
 
 const adminUserCreationSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
+  companyId: z
+    .string()
+    .trim()
+    .optional()
+    .refine((val) => !val || /^C\d{3,}$/i.test(val), {
+      message: 'Company ID must look like C001, C125 (leave blank to auto-generate)'
+    }),
   email: z.string().email('Please enter a valid email address'),
   password: z.string()
     .min(8, 'Password must be at least 8 characters')
@@ -57,7 +64,8 @@ const AdminUserCreationModal = ({ isOpen, onClose, onSuccess }) => {
       role: USER_ROLES.USER,
       department: '',
       phone: '',
-      monthlySalary: 0
+      monthlySalary: 0,
+      companyId: ''
     }
   });
 
@@ -175,6 +183,28 @@ const AdminUserCreationModal = ({ isOpen, onClose, onSuccess }) => {
 
                   {/* Form */}
                   <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                    {/* Company ID (optional) */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Company ID (optional)
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <Building className="h-4 w-4 text-gray-400" />
+                        </div>
+                        <input
+                          {...register('companyId')}
+                          type="text"
+                          className={`input-primary pl-10 w-full ${
+                            errors.companyId ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
+                          }`}
+                          placeholder="e.g., C001 (leave blank to auto-generate)"
+                        />
+                      </div>
+                      {errors.companyId && (
+                        <p className="mt-1 text-sm text-red-500">{errors.companyId.message}</p>
+                      )}
+                    </div>
                     {/* Name Field */}
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-2">

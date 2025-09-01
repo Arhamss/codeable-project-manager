@@ -56,8 +56,26 @@ class UserService {
   // Create new user (Admin only)
   async createUser(userData) {
     try {
-      // Generate company ID
-      const companyId = await this.generateCompanyId();
+      // Determine company ID (manual or auto)
+      let companyId = (userData.companyId || '').trim();
+      if (companyId) {
+        // Normalize format e.g., c001 -> C001
+        if (/^c\d+$/i.test(companyId)) {
+          const n = companyId.slice(1);
+          companyId = `C${n}`;
+        }
+        // Validate format
+        if (!/^C\d{3,}$/.test(companyId)) {
+          throw new Error('Invalid Company ID format. Use like C001 (min 3 digits).');
+        }
+        // Ensure uniqueness
+        const existing = await getDocs(query(this.usersCollection, where('companyId', '==', companyId)));
+        if (!existing.empty) {
+          throw new Error('Company ID already exists. Please choose another or leave blank.');
+        }
+      } else {
+        companyId = await this.generateCompanyId();
+      }
       
       // Create auth user
       const { user } = await createUserWithEmailAndPassword(auth, userData.email, userData.password);

@@ -9,7 +9,7 @@ import {
   EmailAuthProvider,
   reauthenticateWithCredential
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, getDocs, collection, query, where, orderBy } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { USER_ROLES } from '../types';
 
@@ -17,6 +17,26 @@ class AuthService {
   constructor() {
     this.currentUser = null;
     this.userData = null;
+  }
+
+  // Generate next company ID (for admin-created users)
+  async generateCompanyId() {
+    try {
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('companyId', '!=', null), orderBy('companyId', 'desc'));
+      const snap = await getDocs(q);
+      const existingIds = snap.docs.map(d => d.data().companyId).filter(Boolean);
+      if (existingIds.length === 0) return 'C001';
+      const numbers = existingIds
+        .map(id => parseInt(String(id).replace('C', '')))
+        .filter(n => !isNaN(n))
+        .sort((a, b) => b - a);
+      const next = (numbers[0] || 0) + 1;
+      return `C${next.toString().padStart(3, '0')}`;
+    } catch (e) {
+      console.error('generateCompanyId failed', e);
+      return `C${Date.now().toString().slice(-6)}`;
+    }
   }
 
   // Initialize auth state listener
@@ -227,9 +247,28 @@ class AuthService {
       // Create user in Firebase Auth
       const { user } = await createUserWithEmailAndPassword(auth, email, password);
       
+      // Determine companyId (manual or auto)
+      let companyId = (userData.companyId || '').trim();
+      if (companyId) {
+        if (/^c\d+$/i.test(companyId)) {
+          companyId = `C${companyId.slice(1)}`;
+        }
+        if (!/^C\d{3,}$/.test(companyId)) {
+          throw new Error('Invalid Company ID format. Use like C001 (min 3 digits).');
+        }
+        // Uniqueness check
+        const exists = await getDocs(query(collection(db, 'users'), where('companyId', '==', companyId)));
+        if (!exists.empty) {
+          throw new Error('Company ID already exists. Please choose another or leave blank to auto-generate.');
+        }
+      } else {
+        companyId = await this.generateCompanyId();
+      }
+
       // Prepare user data for Firestore
       const userDocData = {
         ...userData,
+        companyId,
         email: user.email,
         role: userData.role || USER_ROLES.USER,
         isActive: true,
