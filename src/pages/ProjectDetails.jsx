@@ -579,6 +579,22 @@ const ProjectDetails = () => {
                   <span className="text-gray-400">Estimated (Total)</span>
                   <span className="text-white font-medium">{totalEstimated}h</span>
                 </div>
+
+                {/* Allocated Hours by Work Type */}
+                <div className="pt-2 border-t border-dark-700">
+                  <p className="text-gray-400 text-sm mb-2">Allocated Hours by Type</p>
+                  <div className="space-y-1">
+                    {Object.entries(project.estimatedHours || {}).map(([workType, hours]) => (
+                      <div key={workType} className="flex justify-between text-sm">
+                        <span className="text-gray-300">{getWorkTypeLabel(workType)}</span>
+                        <span className="text-white">{hours || 0}h</span>
+                      </div>
+                    ))}
+                    {(!project.estimatedHours || Object.keys(project.estimatedHours).length === 0) && (
+                      <p className="text-xs text-gray-500">No allocation provided</p>
+                    )}
+                  </div>
+                </div>
               </div>
             </motion.div>
             )}
