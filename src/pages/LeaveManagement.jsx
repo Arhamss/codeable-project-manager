@@ -28,6 +28,7 @@ import {
 } from '../types';
 import { formatTableDate, formatDateRange } from '../utils/dateUtils';
 import LeaveApprovalModal from '../components/modals/LeaveApprovalModal';
+import LeaveDetailsModal from '../components/modals/LeaveDetailsModal';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import toast from 'react-hot-toast';
 
@@ -42,6 +43,7 @@ const LeaveManagement = () => {
   const [typeFilter, setTypeFilter] = useState('all');
   const [selectedLeave, setSelectedLeave] = useState(null);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [statistics, setStatistics] = useState(null);
   const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'applications', 'balances'
 
@@ -147,6 +149,16 @@ const LeaveManagement = () => {
   const handleViewLeave = (leave) => {
     setSelectedLeave(leave);
     setShowApprovalModal(true);
+  };
+
+  const handleViewDetails = (leave) => {
+    setSelectedLeave(leave);
+    setShowDetailsModal(true);
+  };
+
+  const handleRowClick = (leave) => {
+    setSelectedLeave(leave);
+    setShowDetailsModal(true);
   };
 
   const getLeaveBalanceColor = (leaveType, balance) => {
@@ -488,7 +500,8 @@ const LeaveManagement = () => {
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.1 * index }}
-                          className="border-b border-dark-700 hover:bg-dark-700/50 transition-colors"
+                          className="border-b border-dark-700 hover:bg-dark-700/50 transition-colors cursor-pointer"
+                          onClick={() => handleRowClick(leave)}
                         >
                           <td className="py-4 px-4">
                             <div className="flex items-center space-x-3">
@@ -531,10 +544,10 @@ const LeaveManagement = () => {
                             </span>
                           </td>
                           <td className="py-4 px-4">
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
                               <button
-                                onClick={() => handleViewLeave(leave)}
-                                className="p-1 text-gray-400 hover:text-primary-400 transition-colors"
+                                onClick={() => handleViewDetails(leave)}
+                                className="p-2 text-gray-400 hover:text-primary-400 hover:bg-primary-500/10 rounded-lg transition-all duration-200"
                                 title="View Details"
                               >
                                 <Eye className="w-4 h-4" />
@@ -542,7 +555,7 @@ const LeaveManagement = () => {
                               {leave.status === LEAVE_STATUS.PENDING && (
                                 <button
                                   onClick={() => handleViewLeave(leave)}
-                                  className="p-1 text-gray-400 hover:text-green-400 transition-colors"
+                                  className="p-2 text-gray-400 hover:text-green-400 hover:bg-green-500/10 rounded-lg transition-all duration-200"
                                   title="Review Application"
                                 >
                                   <CheckCircle className="w-4 h-4" />
@@ -666,6 +679,16 @@ const LeaveManagement = () => {
           setSelectedLeave(null);
         }}
         onSuccess={handleApprovalSuccess}
+        leave={selectedLeave}
+      />
+
+      {/* Leave Details Modal */}
+      <LeaveDetailsModal
+        isOpen={showDetailsModal}
+        onClose={() => {
+          setShowDetailsModal(false);
+          setSelectedLeave(null);
+        }}
         leave={selectedLeave}
       />
     </DashboardLayout>
