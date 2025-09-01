@@ -13,6 +13,7 @@ import {
   BarChart3,
   Clock,
   Calendar,
+  FileText,
 } from 'lucide-react';
 import logo from '../assets/logo.png';
 import useAuthStore from '../stores/authStore';

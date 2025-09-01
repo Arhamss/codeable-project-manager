@@ -16,18 +16,63 @@ import { db } from '../lib/firebase';
 import { LEAVE_STATUS, LEAVE_TYPES, DEFAULT_LEAVE_ALLOCATION } from '../types';
 
 class LeaveService {
+  // Generate a unique application ID
+  async generateApplicationId() {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let applicationId;
+    let isUnique = false;
+    let attempts = 0;
+    const maxAttempts = 10;
+
+    while (!isUnique && attempts < maxAttempts) {
+      // Generate a 4-5 character ID
+      const length = Math.random() > 0.5 ? 4 : 5;
+      applicationId = '';
+      
+      for (let i = 0; i < length; i++) {
+        applicationId += characters.charAt(Math.floor(Math.random() * characters.length));
+      }
+
+      // Check if this ID already exists
+      try {
+        const q = query(
+          collection(db, 'leaves'),
+          where('applicationId', '==', applicationId)
+        );
+        const querySnapshot = await getDocs(q);
+        isUnique = querySnapshot.empty;
+        attempts++;
+      } catch (error) {
+        console.error('Error checking application ID uniqueness:', error);
+        break;
+      }
+    }
+
+    if (!isUnique) {
+      // Fallback: use timestamp-based ID if we can't generate unique random ID
+      const timestamp = Date.now().toString();
+      applicationId = timestamp.slice(-5); // Last 5 digits of timestamp
+    }
+
+    return applicationId;
+  }
+
   // Apply for leave
   async applyForLeave(leaveData) {
     try {
+      // Generate a unique application ID
+      const applicationId = await this.generateApplicationId();
+
       const leaveDoc = {
         ...leaveData,
+        applicationId,
         status: LEAVE_STATUS.PENDING,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       };
 
       const docRef = await addDoc(collection(db, 'leaves'), leaveDoc);
-      return { success: true, id: docRef.id };
+      return { success: true, id: docRef.id, applicationId };
     } catch (error) {
       console.error('Error applying for leave:', error);
       throw error;
