@@ -8,7 +8,8 @@ import {
   updateDoc,
   serverTimestamp
 } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { ref, deleteObject } from 'firebase/storage';
+import { db, storage } from '../lib/firebase';
 
 class PoliciesService {
   constructor() {
@@ -69,7 +70,26 @@ class PoliciesService {
   // Delete policy
   async deletePolicy(policyId) {
     try {
-      await deleteDoc(doc(db, 'policies', policyId));
+      // First get the policy to get the storage path
+      const policyDoc = await getDoc(doc(db, 'policies', policyId));
+      
+      if (policyDoc.exists()) {
+        const policyData = policyDoc.data();
+        
+        // Delete the file from storage if it exists
+        if (policyData.storagePath) {
+          try {
+            const fileRef = ref(storage, policyData.storagePath);
+            await deleteObject(fileRef);
+          } catch (storageError) {
+            console.warn('Could not delete file from storage:', storageError);
+            // Continue with policy deletion even if file deletion fails
+          }
+        }
+        
+        // Delete the policy document
+        await deleteDoc(doc(db, 'policies', policyId));
+      }
     } catch (error) {
       console.error('Error deleting policy:', error);
       throw error;

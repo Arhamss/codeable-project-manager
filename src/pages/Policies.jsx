@@ -30,20 +30,47 @@ const Policies = () => {
     }
   };
 
-  const handleDownload = (policy) => {
-    // Create a link element and trigger download
-    const link = document.createElement('a');
-    link.href = policy.fileUrl;
-    link.download = policy.fileName || `${policy.title}.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    toast.success(`Downloading ${policy.title}`);
+  const handleDownload = async (policy) => {
+    if (!policy.fileUrl) {
+      toast.error('Policy file not available');
+      return;
+    }
+
+    try {
+      toast.loading('Preparing download...');
+      
+      // Fetch the file from Firebase Storage
+      const response = await fetch(policy.fileUrl);
+      const blob = await response.blob();
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = policy.fileName || `${policy.title}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      
+      toast.dismiss();
+      toast.success(`Downloaded ${policy.title}`);
+    } catch (error) {
+      toast.dismiss();
+      console.error('Error downloading policy:', error);
+      toast.error('Failed to download policy');
+    }
   };
 
   const handleView = (policy) => {
-    // Open policy in new tab
+    if (!policy.fileUrl) {
+      toast.error('Policy file not available');
+      return;
+    }
+    
+    // Firebase Storage URLs can be opened directly
     window.open(policy.fileUrl, '_blank');
   };
 

@@ -9,7 +9,7 @@ const existingPolicies = [
     description: 'Comprehensive guidelines for remote work arrangements, including expectations, communication protocols, and best practices for maintaining productivity while working remotely.',
     category: 'remote-work',
     fileName: 'Remote Work Policy & Guidelines.pdf',
-    fileUrl: '/src/assets/policies/Remote Work Policy & Guidelines.pdf',
+    fileUrl: '/assets/policies/Remote Work Policy & Guidelines.pdf',
     isActive: true
   },
   {
@@ -17,7 +17,7 @@ const existingPolicies = [
     description: 'Complete leave management policy covering sick leave, casual leave, annual leave, and other time-off arrangements with detailed procedures and requirements.',
     category: 'leave',
     fileName: 'Leave Policy.pdf',
-    fileUrl: '/src/assets/policies/Leave Policy.pdf',
+    fileUrl: '/assets/policies/Leave Policy.pdf',
     isActive: true
   },
   {
@@ -25,7 +25,7 @@ const existingPolicies = [
     description: 'Equipment and IT policy for company-issued laptops, including usage guidelines, security requirements, and maintenance procedures.',
     category: 'equipment',
     fileName: 'Laptop Policy.pdf',
-    fileUrl: '/src/assets/policies/Laptop Policy.pdf',
+    fileUrl: '/assets/policies/Laptop Policy.pdf',
     isActive: true
   },
   {
@@ -33,7 +33,7 @@ const existingPolicies = [
     description: 'Core employment policies covering terms of employment, workplace conduct, and general employment guidelines for all employees.',
     category: 'employment',
     fileName: 'Employment Policy.pdf',
-    fileUrl: '/src/assets/policies/Employment Policy.pdf',
+    fileUrl: '/assets/policies/Employment Policy.pdf',
     isActive: true
   },
   {
@@ -41,7 +41,7 @@ const existingPolicies = [
     description: 'Policy for compensation and allowances when working additional days beyond regular schedule, including overtime and weekend work.',
     category: 'compensation',
     fileName: 'Extra Work Day Allowance.pdf',
-    fileUrl: '/src/assets/policies/Extra Work Day Allowance.pdf',
+    fileUrl: '/assets/policies/Extra Work Day Allowance.pdf',
     isActive: true
   },
   {
@@ -49,7 +49,7 @@ const existingPolicies = [
     description: 'Guidelines for compensatory leave arrangements, including when and how compensatory time off is granted and utilized.',
     category: 'leave',
     fileName: 'Compensatory Leave Policy.pdf',
-    fileUrl: '/src/assets/policies/Compensatory Leave Policy.pdf',
+    fileUrl: '/assets/policies/Compensatory Leave Policy.pdf',
     isActive: true
   }
 ];

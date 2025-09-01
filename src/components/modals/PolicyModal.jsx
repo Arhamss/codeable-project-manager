@@ -5,6 +5,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { X, FileText, Upload, AlertCircle } from 'lucide-react';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '../../lib/firebase';
 import { policiesService } from '../../services/policiesService';
 import useAuthStore from '../../stores/authStore';
 import LoadingSpinner from '../ui/LoadingSpinner';
@@ -80,6 +82,31 @@ const PolicyModal = ({ isOpen, onClose, onSuccess, editingPolicy = null }) => {
     }
   };
 
+  const uploadFileToStorage = async (file) => {
+    try {
+      // Create a unique filename with timestamp
+      const timestamp = Date.now();
+      const fileName = `${timestamp}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      const storageRef = ref(storage, `policies/${fileName}`);
+      
+      // Upload file to Firebase Storage
+      const snapshot = await uploadBytes(storageRef, file);
+      
+      // Get download URL
+      const downloadURL = await getDownloadURL(snapshot.ref);
+      
+      return {
+        fileName: file.name,
+        storagePath: `policies/${fileName}`,
+        fileUrl: downloadURL,
+        fileSize: file.size
+      };
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      throw new Error('Failed to upload file to storage');
+    }
+  };
+
   const onSubmit = async (data) => {
     // For new policies, require file upload
     if (!editingPolicy && !selectedFile) {
@@ -94,25 +121,34 @@ const PolicyModal = ({ isOpen, onClose, onSuccess, editingPolicy = null }) => {
         // Update existing policy
         const updateData = { ...data };
         
-        // If a new file is selected, handle file upload
+        // If a new file is selected, upload it and update the file info
         if (selectedFile) {
-          // TODO: Implement file upload to storage service
-          // For now, we'll just update the metadata
-          updateData.fileName = selectedFile.name;
-          updateData.fileSize = selectedFile.size;
+          toast.loading('Uploading file...');
+          const fileInfo = await uploadFileToStorage(selectedFile);
+          
+          updateData.fileName = fileInfo.fileName;
+          updateData.fileSize = fileInfo.fileSize;
+          updateData.fileUrl = fileInfo.fileUrl;
+          updateData.storagePath = fileInfo.storagePath;
           updateData.updatedBy = userData.id;
+          
+          toast.dismiss();
         }
 
         await policiesService.updatePolicy(editingPolicy.id, updateData);
       } else {
-        // Create new policy
+        // Create new policy - upload file first
+        toast.loading('Uploading file...');
+        const fileInfo = await uploadFileToStorage(selectedFile);
+        toast.dismiss();
+        
         const policyData = {
           ...data,
-          fileName: selectedFile.name,
-          fileSize: selectedFile.size,
+          fileName: fileInfo.fileName,
+          fileSize: fileInfo.fileSize,
+          fileUrl: fileInfo.fileUrl,
+          storagePath: fileInfo.storagePath,
           uploadedBy: userData.id,
-          // TODO: fileUrl will be set after file upload to storage
-          fileUrl: '', // This should be set after successful file upload
         };
 
         await policiesService.addPolicy(policyData);
@@ -120,8 +156,9 @@ const PolicyModal = ({ isOpen, onClose, onSuccess, editingPolicy = null }) => {
 
       onSuccess();
     } catch (error) {
+      toast.dismiss();
       console.error('Error saving policy:', error);
-      toast.error('Failed to save policy');
+      toast.error(error.message || 'Failed to save policy');
     } finally {
       setIsSubmitting(false);
     }

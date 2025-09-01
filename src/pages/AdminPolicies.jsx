@@ -52,6 +52,12 @@ const AdminPolicies = () => {
   };
 
   const handleViewPolicy = (policy) => {
+    if (!policy.fileUrl) {
+      toast.error('Policy file not available');
+      return;
+    }
+    
+    // Firebase Storage URLs can be opened directly
     window.open(policy.fileUrl, '_blank');
   };
 
