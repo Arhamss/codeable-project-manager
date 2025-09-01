@@ -741,6 +741,7 @@ const ProjectDetails = () => {
         onClose={() => setShowTimeLogModal(false)}
         onSuccess={handleTimeLogSuccess}
         projects={[project]}
+        preselectedProject={project}
       />
 
       {isAdmin() && (
