@@ -29,7 +29,7 @@ const profileSchema = z.object({
 const Profile = () => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const { userData, updateProfile } = useAuthStore();
+  const { userData, updateProfile, isAdmin } = useAuthStore();
 
   const {
     register,
@@ -212,10 +212,10 @@ const Profile = () => {
               </div>
             </div>
 
-            {/* Company ID (Optional) */}
+            {/* Company ID (Employee ID) */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Company ID <span className="text-gray-500">(Optional)</span>
+                Employee ID {isAdmin() ? <span className="text-gray-500">(Optional)</span> : <span className="text-gray-500 text-xs">(Cannot be changed)</span>}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -224,7 +224,10 @@ const Profile = () => {
                 <input
                   {...register('companyId')}
                   type="text"
+                  disabled={!isAdmin()}
                   className={`input-primary pl-10 w-full ${
+                    !isAdmin() ? 'opacity-60 cursor-not-allowed' : ''
+                  } ${
                     errors.companyId ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
                   }`}
                   placeholder="e.g., C001"
@@ -232,6 +235,9 @@ const Profile = () => {
               </div>
               {errors.companyId && (
                 <p className="mt-1 text-sm text-red-500">{errors.companyId.message}</p>
+              )}
+              {!isAdmin() && (
+                <p className="text-xs text-gray-500 mt-1">Only administrators can modify employee IDs</p>
               )}
             </div>
 

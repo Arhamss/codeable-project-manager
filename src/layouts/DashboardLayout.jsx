@@ -15,7 +15,7 @@ import {
   Calendar,
   FileText,
 } from 'lucide-react';
-import logo from '../assets/logo.png';
+import logo from '../assets/codeable_logo.svg';
 import useAuthStore from '../stores/authStore';
 import toast from 'react-hot-toast';
 
@@ -157,10 +157,10 @@ const DashboardLayout = ({ children }) => {
       <aside className="dashboard-sidebar hidden lg:flex lg:flex-col lg:w-64 lg:bg-dark-900 lg:border-r lg:border-dark-800">
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-between h-16 px-6 border-b border-dark-800">
+          <div className="flex items-center justify-between h-16 pl-6 border-b border-dark-800">
             <div className="flex items-center space-x-3">
-              <div className="flex items-center justify-center w-8 h-8 bg-white rounded-lg p-1">
-                <img src={logo} alt="Codeable Logo" className="w-full h-full object-contain" />
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg">
+                <img src={logo} alt="Codeable Logo" className="w-full h-full object" />
               </div>
               <span className="text-xl font-bold text-white">Codeable</span>
             </div>
@@ -229,9 +229,7 @@ const DashboardLayout = ({ children }) => {
           {/* Logo */}
           <div className="flex items-center justify-between h-16 px-6 border-b border-dark-800">
             <div className="flex items-center space-x-3">
-              <div className="flex items-center justify-center w-8 h-8 bg-white rounded-lg p-1">
                 <img src={logo} alt="Codeable Logo" className="w-full h-full object-contain" />
-              </div>
               <span className="text-xl font-bold text-white">Codeable</span>
             </div>
             <button
