@@ -128,6 +128,12 @@ const ProjectDetails = () => {
   const totalCosts = Object.values(project.costs || {}).reduce((sum, cost) => sum + cost, 0);
   const profit = projectIncome - totalCosts;
 
+  // User-specific metrics for non-admins
+  const userHours = (analytics?.recentLogs || [])
+    .filter((log) => log.userId === userData?.id)
+    .reduce((sum, log) => sum + (log.hours || 0), 0);
+  const totalEstimated = Object.values(project?.estimatedHours || {}).reduce((sum, hrs) => sum + hrs, 0);
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -214,43 +220,83 @@ const ProjectDetails = () => {
             </div>
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="card"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-400 text-sm">Revenue</p>
-                <p className="text-2xl font-bold text-green-400">
-                  ${projectIncome.toLocaleString()}
-                </p>
-              </div>
-              <div className="p-3 bg-green-600/20 rounded-lg">
-                <DollarSign className="w-6 h-6 text-green-400" />
-              </div>
-            </div>
-          </motion.div>
+          {isAdmin() ? (
+            <>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="card"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-400 text-sm">Revenue</p>
+                    <p className="text-2xl font-bold text-green-400">
+                      ${projectIncome.toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-green-600/20 rounded-lg">
+                    <DollarSign className="w-6 h-6 text-green-400" />
+                  </div>
+                </div>
+              </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="card"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-400 text-sm">Profit</p>
-                <p className={`text-2xl font-bold ${profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  ${profit.toLocaleString()}
-                </p>
-              </div>
-              <div className={`p-3 rounded-lg ${profit >= 0 ? 'bg-green-600/20' : 'bg-red-600/20'}`}>
-                <BarChart3 className={`w-6 h-6 ${profit >= 0 ? 'text-green-400' : 'text-red-400'}`} />
-              </div>
-            </div>
-          </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="card"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-400 text-sm">Profit</p>
+                    <p className={`text-2xl font-bold ${profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      ${profit.toLocaleString()}
+                    </p>
+                  </div>
+                  <div className={`p-3 rounded-lg ${profit >= 0 ? 'bg-green-600/20' : 'bg-red-600/20'}`}>
+                    <BarChart3 className={`w-6 h-6 ${profit >= 0 ? 'text-green-400' : 'text-red-400'}`} />
+                  </div>
+                </div>
+              </motion.div>
+            </>
+          ) : (
+            <>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="card"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-400 text-sm">My Hours</p>
+                    <p className="text-2xl font-bold text-white">{userHours}h</p>
+                  </div>
+                  <div className="p-3 bg-blue-600/20 rounded-lg">
+                    <Clock className="w-6 h-6 text-blue-400" />
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="card"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-400 text-sm">Remaining Hours</p>
+                    <p className="text-2xl font-bold text-white">{Math.max(0, totalEstimated - (analytics.totalLoggedHours || 0))}h</p>
+                  </div>
+                  <div className="p-3 bg-orange-600/20 rounded-lg">
+                    <TrendingUp className="w-6 h-6 text-orange-400" />
+                  </div>
+                </div>
+              </motion.div>
+            </>
+          )}
         </div>
 
         {/* Main Content */}
@@ -456,7 +502,8 @@ const ProjectDetails = () => {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Financial Breakdown */}
+            {/* Conditional Sidebar */}
+            {isAdmin() ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -509,6 +556,32 @@ const ProjectDetails = () => {
                 </div>
               </div>
             </motion.div>
+            ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="card"
+            >
+              <div className="card-header">
+                <h3 className="text-lg font-semibold text-white">Activity Summary</h3>
+              </div>
+              <div className="space-y-4">
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Your Hours</span>
+                  <span className="text-white font-medium">{userHours}h</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Team Hours</span>
+                  <span className="text-white font-medium">{analytics.totalLoggedHours}h</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Estimated (Total)</span>
+                  <span className="text-white font-medium">{totalEstimated}h</span>
+                </div>
+              </div>
+            </motion.div>
+            )}
 
             {/* Recent Activity */}
             <motion.div

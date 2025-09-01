@@ -203,7 +203,7 @@ const ProjectCard = ({
 
       {/* Metrics */}
       <div className="space-y-3 mb-4">
-        {/* Time and Revenue for Admin */}
+        {/* Time and Revenue for Admin (hide for non-admin usage) */}
         {!userSpecific && (
           <div className="grid grid-cols-2 gap-4">
             <div className="flex items-center">
