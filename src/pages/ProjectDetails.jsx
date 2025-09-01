@@ -457,10 +457,18 @@ const ProjectDetails = () => {
                   targetWeekEnd.setDate(targetWeekStart.getDate() + 6);
 
                   // Filter logs for the target week
+                  console.log('Daily Hours Breakdown - Week filtering:');
+                  console.log('Target week start:', targetWeekStart);
+                  console.log('Target week end:', targetWeekEnd);
+                  console.log('All recent logs:', analytics.recentLogs);
+                  
                   const weekLogs = analytics.recentLogs.filter(log => {
                     const logDate = new Date(log.date);
+                    console.log('Checking log:', { date: log.date, logDate, isInWeek: logDate >= targetWeekStart && logDate <= targetWeekEnd });
                     return logDate >= targetWeekStart && logDate <= targetWeekEnd;
                   });
+                  
+                  console.log('Filtered week logs:', weekLogs);
 
                   // Group time logs by date
                   const dailyLogs = {};
