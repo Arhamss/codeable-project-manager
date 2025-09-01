@@ -160,6 +160,19 @@ const AdminUserCreationModal = ({ isOpen, onClose, onSuccess }) => {
                     </div>
                   </div>
 
+                  {/* Company ID Info */}
+                  <div className="mb-6 p-3 bg-green-600/20 border border-green-600/30 rounded-lg">
+                    <div className="flex items-start space-x-2">
+                      <div className="w-2 h-2 bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
+                      <div>
+                        <p className="text-sm text-green-300 font-medium">Auto-Generated Company ID</p>
+                        <p className="text-xs text-green-400 mt-1">
+                          A unique company ID (e.g., C001, C002) will be automatically generated for this employee.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Form */}
                   <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                     {/* Name Field */}

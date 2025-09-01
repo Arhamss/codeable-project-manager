@@ -144,7 +144,9 @@ const LeaveApprovalModal = ({ isOpen, onClose, onSuccess, leave }) => {
                         </div>
                         <div>
                           <p className="text-white font-medium">{leave.userName}</p>
-                          <p className="text-sm text-gray-400">Employee</p>
+                          <p className="text-sm text-gray-400">
+                            {leave.companyId ? `Employee • ${leave.companyId}` : 'Employee'}
+                          </p>
                         </div>
                       </div>
                     </div>

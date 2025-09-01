@@ -133,8 +133,8 @@ const LeaveDetailsModal = ({ isOpen, onClose, leave }) => {
                             <span className="text-sm text-white font-medium">{leave.userName}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-sm text-gray-400">Employee ID:</span>
-                            <span className="text-sm text-white font-medium">{leave.userId}</span>
+                            <span className="text-sm text-gray-400">Company ID:</span>
+                            <span className="text-sm text-white font-medium font-mono">{leave.companyId || 'N/A'}</span>
                           </div>
                         </div>
                       </div>

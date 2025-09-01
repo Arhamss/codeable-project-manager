@@ -22,9 +22,43 @@ class UserService {
     this.usersCollection = collection(db, 'users');
   }
 
+  // Generate next company ID
+  async generateCompanyId() {
+    try {
+      const q = query(
+        this.usersCollection,
+        where('companyId', '!=', null),
+        orderBy('companyId', 'desc')
+      );
+      
+      const querySnapshot = await getDocs(q);
+      const existingIds = querySnapshot.docs.map(doc => doc.data().companyId);
+      
+      if (existingIds.length === 0) {
+        return 'C001';
+      }
+      
+      // Find the highest number and increment
+      const numbers = existingIds
+        .map(id => parseInt(id.replace('C', '')))
+        .filter(num => !isNaN(num))
+        .sort((a, b) => b - a);
+      
+      const nextNumber = (numbers[0] || 0) + 1;
+      return `C${nextNumber.toString().padStart(3, '0')}`;
+    } catch (error) {
+      console.error('Error generating company ID:', error);
+      // Fallback to timestamp-based ID
+      return `C${Date.now().toString().slice(-6)}`;
+    }
+  }
+
   // Create new user (Admin only)
   async createUser(userData) {
     try {
+      // Generate company ID
+      const companyId = await this.generateCompanyId();
+      
       // Create auth user
       const { user } = await createUserWithEmailAndPassword(auth, userData.email, userData.password);
       
@@ -37,6 +71,7 @@ class UserService {
       const userDocData = {
         email: user.email,
         name: userData.name || '',
+        companyId: companyId,
         role: userData.role || USER_ROLES.USER,
         position: userData.position || '',
         department: userData.department || '',

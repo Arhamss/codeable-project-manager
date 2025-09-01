@@ -140,6 +140,7 @@ const LeaveApplicationModal = ({ isOpen, onClose, onSuccess }) => {
       const leaveData = {
         userId: userData.id,
         userName: userData.name,
+        companyId: userData.companyId,
         leaveType: data.leaveType,
         startDate: data.startDate,
         endDate: data.endDate,
