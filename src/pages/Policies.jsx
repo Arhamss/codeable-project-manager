@@ -167,26 +167,28 @@ const Policies = () => {
               >
                 {/* Policy Header */}
                 <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <h3 className="text-lg font-semibold text-white mb-2 line-clamp-2">
                       {policy.title}
                     </h3>
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(policy.category)} text-white`}>
+                    <div className="flex items-center gap-2 mb-3 flex-wrap">
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getCategoryColor(policy.category)} text-white`}>
                         {getCategoryLabel(policy.category)}
                       </span>
                       {policy.isActive ? (
-                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-500 text-white">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-500 text-white">
                           Active
                         </span>
                       ) : (
-                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-500 text-white">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-500 text-white">
                           Inactive
                         </span>
                       )}
                     </div>
                   </div>
-                  <FileText className="w-8 h-8 text-primary-400 flex-shrink-0" />
+                  <div className="flex-shrink-0 w-12 h-12 bg-primary-500/10 rounded-lg flex items-center justify-center ml-4">
+                    <FileText className="w-6 h-6 text-primary-400" />
+                  </div>
                 </div>
 
                 {/* Policy Description */}

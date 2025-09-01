@@ -241,11 +241,13 @@ const AdminPolicies = () => {
                     >
                       <td className="px-6 py-4">
                         <div className="flex items-center">
-                          <FileText className="w-8 h-8 text-primary-400 mr-3" />
-                          <div>
-                            <div className="text-sm font-medium text-white">{policy.title}</div>
+                          <div className="flex-shrink-0 w-10 h-10 bg-primary-500/10 rounded-lg flex items-center justify-center mr-3">
+                            <FileText className="w-5 h-5 text-primary-400" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-medium text-white truncate">{policy.title}</div>
                             {policy.description && (
-                              <div className="text-sm text-gray-400 line-clamp-1">
+                              <div className="text-sm text-gray-400 line-clamp-1 mt-1">
                                 {policy.description}
                               </div>
                             )}
@@ -253,12 +255,12 @@ const AdminPolicies = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(policy.category)} text-white`}>
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getCategoryColor(policy.category)} text-white`}>
                           {getCategoryLabel(policy.category)}
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
                           policy.isActive ? 'bg-green-500 text-white' : 'bg-gray-500 text-white'
                         }`}>
                           {policy.isActive ? 'Active' : 'Inactive'}
