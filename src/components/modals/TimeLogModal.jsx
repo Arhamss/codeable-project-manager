@@ -55,7 +55,8 @@ const TimeLogModal = ({ isOpen, onClose, onSuccess, projects = [], preselectedPr
     handleSubmit,
     formState: { errors },
     reset,
-    watch
+    watch,
+    setValue
   } = useForm({
     resolver: zodResolver(timeLogSchema),
     defaultValues: {
@@ -200,11 +201,9 @@ const TimeLogModal = ({ isOpen, onClose, onSuccess, projects = [], preselectedPr
                       </label>
                       <CustomDatePicker
                         selected={watch('date')}
-                        onChange={(d) => {
-                          // react-hook-form controlled update
-                          // We cannot destructure setValue here since it's not from this scope, so rewire above
-                        }}
+                        onChange={(d) => setValue('date', d, { shouldValidate: true })}
                         placeholderText="Select date"
+                        className=""
                       />
                       {errors.date && (
                         <p className="mt-1 text-sm text-red-500">{errors.date.message}</p>
