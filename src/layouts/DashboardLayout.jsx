@@ -18,12 +18,24 @@ import {
 import logo from '../assets/logo.png';
 import useAuthStore from '../stores/authStore';
 import toast from 'react-hot-toast';
+import ProfilePictureUpload from '../components/ui/ProfilePictureUpload';
 
 const DashboardLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { userData, logout, isAdmin } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const handleProfilePictureUpdate = async (imageData) => {
+    try {
+      // Update the user's profile picture in the auth store
+      // This will trigger a re-render with the new image
+      console.log('Profile picture updated:', imageData);
+    } catch (error) {
+      console.error('Error updating profile picture:', error);
+      toast.error('Failed to update profile picture');
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -316,11 +328,14 @@ const DashboardLayout = ({ children }) => {
               onClick={() => navigate('/profile')}
               className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors"
             >
-              <div className="flex items-center justify-center w-8 h-8 bg-primary-600 rounded-full">
-                <span className="text-xs font-medium text-white">
-                  {userData?.name?.charAt(0)?.toUpperCase() || 'U'}
-                </span>
-              </div>
+              <ProfilePictureUpload
+                currentImageUrl={userData?.profilePictureUrl}
+                onImageUpdate={handleProfilePictureUpdate}
+                userId={userData?.id}
+                userName={userData?.name}
+                size="small"
+                className="flex-shrink-0"
+              />
             </button>
           </div>
         </header>

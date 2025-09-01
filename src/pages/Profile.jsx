@@ -9,6 +9,7 @@ import useAuthStore from '../stores/authStore';
 import { DEPARTMENTS, getDepartmentLabel } from '../types';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import PasswordChangeModal from '../components/modals/PasswordChangeModal';
+import ProfilePictureUpload from '../components/ui/ProfilePictureUpload';
 import toast from 'react-hot-toast';
 
 const profileSchema = z.object({
@@ -60,6 +61,27 @@ const Profile = () => {
     }
   }, [userData, reset]);
 
+  const handleProfilePictureUpdate = async (imageData) => {
+    try {
+      const updateData = {
+        profilePictureUrl: imageData.profilePictureUrl,
+        profilePicturePath: imageData.profilePicturePath
+      };
+      
+      const result = await updateProfile(updateData);
+      
+      if (result.success) {
+        // Profile picture update is handled separately, no need to reset form
+        console.log('Profile picture updated successfully');
+      } else {
+        toast.error(result.error || 'Failed to update profile picture');
+      }
+    } catch (error) {
+      console.error('Error updating profile picture:', error);
+      toast.error('Failed to update profile picture');
+    }
+  };
+
   const onSubmit = async (data) => {
     try {
       setIsUpdating(true);
@@ -99,10 +121,14 @@ const Profile = () => {
           animate={{ opacity: 1, y: 0 }}
           className="text-center"
         >
-          <div className="flex items-center justify-center w-20 h-20 bg-primary-600 rounded-full mx-auto mb-4">
-            <span className="text-2xl font-bold text-white">
-              {userData?.name?.charAt(0)?.toUpperCase() || 'U'}
-            </span>
+          <div className="flex justify-center mb-4">
+            <ProfilePictureUpload
+              currentImageUrl={userData?.profilePictureUrl}
+              onImageUpdate={handleProfilePictureUpdate}
+              userId={userData?.id}
+              userName={userData?.name}
+              size="xlarge"
+            />
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">Profile Settings</h1>
           <p className="text-gray-400">Manage your account information</p>
