@@ -12,6 +12,9 @@
   "dependencies": {
     "@headlessui/react": "^2.2.7",
     "@hookform/resolvers": "^5.2.1",
+    "@rtdui/core": "^5.1.0",
+    "@rtdui/editor": "^5.1.0",
+    "@rtdui/hooks": "^5.1.0",
     "@tailwindcss/postcss": "^4.1.12",
     "@tailwindcss/vite": "^4.1.12",
     "@tanstack/react-query": "^5.85.6",
