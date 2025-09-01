@@ -133,8 +133,7 @@ const CustomDatePicker = ({
         dateFormat="dd/MM/yyyy"
         showPopperArrow={false}
         popperClassName="custom-datepicker-popper"
-        popperPlacement="auto"
-        portalId="datepicker-portal"
+        popperPlacement="bottom-start"
         popperModifiers={[
           {
             name: 'offset',
@@ -152,7 +151,7 @@ const CustomDatePicker = ({
           {
             name: 'flip',
             options: {
-              fallbackPlacements: ['top-start', 'bottom-start', 'top-end', 'bottom-end'],
+              fallbackPlacements: ['top-start', 'bottom-start'],
             },
           },
         ]}
@@ -271,9 +270,9 @@ const CustomDatePicker = ({
           z-index: 99999 !important;
         }
         
-        /* Ensure proper positioning in modals */
+        /* Ensure proper positioning relative to the input */
         .react-datepicker-popper {
-          position: fixed !important;
+          position: absolute !important;
         }
       `}</style>
     </div>
