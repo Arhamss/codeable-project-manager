@@ -9,7 +9,6 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../../lib/firebase';
 import { policiesService } from '../../services/policiesService';
 import useAuthStore from '../../stores/authStore';
-import RichTextEditor from '../ui/RichTextEditor';
 import LoadingSpinner from '../ui/LoadingSpinner';
 import toast from 'react-hot-toast';
 
@@ -239,12 +238,13 @@ const PolicyModal = ({ isOpen, onClose, onSuccess, editingPolicy = null }) => {
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       Description *
                     </label>
-                    <RichTextEditor
-                      value={watch('description') || ''}
-                      onChange={(value) => setValue('description', value)}
-                      placeholder="Describe the policy content and purpose..."
+                    <textarea
+                      {...register('description')}
                       rows={3}
-                      error={!!errors.description}
+                      className={`input-primary w-full resize-none ${
+                        errors.description ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
+                      }`}
+                      placeholder="Describe the policy content and purpose..."
                     />
                     {errors.description && (
                       <p className="mt-1 text-sm text-red-500">{errors.description.message}</p>
