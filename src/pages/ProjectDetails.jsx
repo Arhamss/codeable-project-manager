@@ -10,7 +10,9 @@ import {
   TrendingUp,
   Plus,
   Edit,
-  BarChart3
+  BarChart3,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { projectService } from '../services/projectService';
@@ -31,6 +33,7 @@ const ProjectDetails = () => {
   const [loading, setLoading] = useState(true);
   const [showTimeLogModal, setShowTimeLogModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
 
   useEffect(() => {
     loadProjectData();
@@ -371,8 +374,32 @@ const ProjectDetails = () => {
               transition={{ delay: 0.5 }}
               className="card"
             >
-              <div className="card-header">
+              <div className="card-header flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-white">Daily Hours Breakdown</h3>
+                
+                {/* Week Navigation */}
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => setCurrentWeekOffset(currentWeekOffset + 1)}
+                    className="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-dark-700"
+                    title="Previous Week"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  
+                  <span className="text-sm text-gray-300 px-3">
+                    {currentWeekOffset === 0 ? 'This Week' : `${currentWeekOffset} week${currentWeekOffset > 1 ? 's' : ''} ago`}
+                  </span>
+                  
+                  <button
+                    onClick={() => setCurrentWeekOffset(Math.max(0, currentWeekOffset - 1))}
+                    disabled={currentWeekOffset === 0}
+                    className="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-dark-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Next Week"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
               
               <div className="space-y-4">
@@ -407,9 +434,32 @@ const ProjectDetails = () => {
                 </div>
 
                 {(() => {
+                  // Helper function to get start of week (Monday)
+                  const getStartOfWeek = (date) => {
+                    const d = new Date(date);
+                    const day = d.getDay();
+                    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+                    return new Date(d.setDate(diff));
+                  };
+
+                  // Get current week start and adjust for offset
+                  const now = new Date();
+                  const currentWeekStart = getStartOfWeek(now);
+                  const targetWeekStart = new Date(currentWeekStart);
+                  targetWeekStart.setDate(currentWeekStart.getDate() - (currentWeekOffset * 7));
+                  
+                  const targetWeekEnd = new Date(targetWeekStart);
+                  targetWeekEnd.setDate(targetWeekStart.getDate() + 6);
+
+                  // Filter logs for the target week
+                  const weekLogs = analytics.recentLogs.filter(log => {
+                    const logDate = new Date(log.date);
+                    return logDate >= targetWeekStart && logDate <= targetWeekEnd;
+                  });
+
                   // Group time logs by date
                   const dailyLogs = {};
-                  analytics.recentLogs.forEach(log => {
+                  weekLogs.forEach(log => {
                     const date = new Date(log.date).toLocaleDateString();
                     if (!dailyLogs[date]) {
                       dailyLogs[date] = {};
@@ -444,25 +494,50 @@ const ProjectDetails = () => {
                   // Sort dates
                   const sortedDates = Object.keys(dailyLogs).sort((a, b) => new Date(a) - new Date(b));
 
+                  // Work type colors
+                  const workTypeColors = {
+                    'backend': 'bg-blue-500',
+                    'frontend_web': 'bg-green-500',
+                    'frontend_mobile': 'bg-purple-500',
+                    'ui_design': 'bg-yellow-500',
+                    'deployment': 'bg-red-500',
+                    'testing': 'bg-indigo-500',
+                    'documentation': 'bg-pink-500',
+                    'meetings': 'bg-gray-500',
+                    'other': 'bg-orange-500'
+                  };
+
+                  if (sortedDates.length === 0) {
+                    return (
+                      <div className="text-center py-8">
+                        <Clock className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                        <p className="text-gray-400">
+                          No time logs recorded for {currentWeekOffset === 0 ? 'this week' : 'this week'}
+                        </p>
+                        {currentWeekOffset > 0 && (
+                          <button
+                            onClick={() => setCurrentWeekOffset(0)}
+                            className="text-primary-400 hover:text-primary-300 text-sm mt-2 transition-colors"
+                          >
+                            Go to current week
+                          </button>
+                        )}
+                      </div>
+                    );
+                  }
+
                   return sortedDates.map(date => {
                     const dayLogs = dailyLogs[date];
                     const totalDayHours = Object.values(dayLogs).reduce((sum, hours) => sum + hours, 0);
-                    
-                    // Work type colors
-                    const workTypeColors = {
-                      'backend': 'bg-blue-500',
-                      'frontend_web': 'bg-green-500',
-                      'frontend_mobile': 'bg-purple-500',
-                      'ui_design': 'bg-yellow-500',
-                      'deployment': 'bg-red-500',
-                      'testing': 'bg-indigo-500',
-                      'documentation': 'bg-pink-500',
-                      'meetings': 'bg-gray-500',
-                      'other': 'bg-orange-500'
-                    };
 
                     return (
-                      <div key={date} className="space-y-2 p-3 bg-dark-800 rounded-lg border border-dark-700">
+                      <motion.div 
+                        key={date} 
+                        className="space-y-2 p-3 bg-dark-800 rounded-lg border border-dark-700"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
                         <div className="flex justify-between items-center">
                           <span className="text-gray-300 font-medium">{formatDateWithOrdinal(date)}</span>
                           <span className="text-white font-bold text-lg">{totalDayHours}h</span>
@@ -488,14 +563,10 @@ const ProjectDetails = () => {
                             </div>
                           ))}
                         </div>
-                      </div>
+                      </motion.div>
                     );
                   });
                 })()}
-                
-                {analytics.recentLogs.length === 0 && (
-                  <p className="text-gray-400 text-center py-4">No time logs recorded yet</p>
-                )}
               </div>
             </motion.div>
           </div>
