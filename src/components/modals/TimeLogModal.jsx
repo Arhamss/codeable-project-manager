@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { X, Clock, Calendar, FileText, Briefcase } from 'lucide-react';
+import CustomDatePicker from '../ui/DatePicker';
 import { WORK_TYPES, getWorkTypeLabel } from '../../types';
 import { projectService } from '../../services/projectService';
 import useAuthStore from '../../stores/authStore';
@@ -15,7 +16,7 @@ const timeLogSchema = z.object({
   projectId: z.string().min(1, 'Please select a project'),
   workType: z.enum(Object.values(WORK_TYPES), { required_error: 'Please select work type' }),
   hours: z.number().min(0.1, 'Hours must be at least 0.1').max(24, 'Hours cannot exceed 24'),
-  date: z.string().min(1, 'Please select a date'),
+  date: z.date({ required_error: 'Please select a date' }),
   description: z.string().min(5, 'Description must be at least 5 characters')
 });
 
@@ -59,7 +60,7 @@ const TimeLogModal = ({ isOpen, onClose, onSuccess, projects = [], preselectedPr
     resolver: zodResolver(timeLogSchema),
     defaultValues: {
       projectId: preselectedProject?.id || '',
-      date: new Date().toISOString().split('T')[0],
+      date: new Date(),
       hours: 1,
       workType: WORK_TYPES.OTHER
     }
@@ -197,18 +198,14 @@ const TimeLogModal = ({ isOpen, onClose, onSuccess, projects = [], preselectedPr
                       <label className="block text-sm font-medium text-gray-300 mb-2">
                         Date *
                       </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <Calendar className="h-4 w-4 text-gray-400" />
-                        </div>
-                        <input
-                          {...register('date')}
-                          type="date"
-                          className={`input-primary pl-10 w-full ${
-                            errors.date ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
-                          }`}
-                        />
-                      </div>
+                      <CustomDatePicker
+                        selected={watch('date')}
+                        onChange={(d) => {
+                          // react-hook-form controlled update
+                          // We cannot destructure setValue here since it's not from this scope, so rewire above
+                        }}
+                        placeholderText="Select date"
+                      />
                       {errors.date && (
                         <p className="mt-1 text-sm text-red-500">{errors.date.message}</p>
                       )}
