@@ -439,12 +439,14 @@ const ProjectDetails = () => {
                 </div>
 
                 {(() => {
-                  // Helper function to get start of week (Monday)
+                  // Helper function to get start of week (Monday) at midnight
                   const getStartOfWeek = (date) => {
                     const d = new Date(date);
                     const day = d.getDay();
                     const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
-                    return new Date(d.setDate(diff));
+                    d.setDate(d.getDate() + diff);
+                    d.setHours(0, 0, 0, 0); // Set to start of day
+                    return d;
                   };
 
                   // Get current week start and adjust for offset
@@ -455,6 +457,7 @@ const ProjectDetails = () => {
                   
                   const targetWeekEnd = new Date(targetWeekStart);
                   targetWeekEnd.setDate(targetWeekStart.getDate() + 6);
+                  targetWeekEnd.setHours(23, 59, 59, 999); // Set to end of day
 
                   // Filter logs for the target week
                   console.log('Daily Hours Breakdown - Week filtering:');
@@ -464,7 +467,15 @@ const ProjectDetails = () => {
                   
                   const weekLogs = analytics.recentLogs.filter(log => {
                     const logDate = new Date(log.date);
-                    console.log('Checking log:', { date: log.date, logDate, isInWeek: logDate >= targetWeekStart && logDate <= targetWeekEnd });
+                    // Normalize log date to start of day for comparison
+                    logDate.setHours(0, 0, 0, 0);
+                    console.log('Checking log:', { 
+                      originalDate: log.date, 
+                      normalizedLogDate: logDate, 
+                      targetWeekStart, 
+                      targetWeekEnd,
+                      isInWeek: logDate >= targetWeekStart && logDate <= targetWeekEnd 
+                    });
                     return logDate >= targetWeekStart && logDate <= targetWeekEnd;
                   });
                   
