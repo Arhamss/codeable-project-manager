@@ -289,37 +289,51 @@ const LeaveApplicationModal = ({ isOpen, onClose, onSuccess }) => {
                     </div>
 
                     {/* Date Range */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                          Start Date *
-                        </label>
-                        <CustomDatePicker
-                          selected={watchedStartDate}
-                          onChange={(date) => setValue('startDate', date)}
-                          minDate={new Date()}
-                          placeholderText="Select start date"
-                          className={errors.startDate ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}
-                        />
-                        {errors.startDate && (
-                          <p className="mt-1 text-sm text-red-500">{errors.startDate.message}</p>
-                        )}
+                    <div className="space-y-3">
+                      {/* Past Date Notice */}
+                      <div className="p-3 bg-blue-600/10 border border-blue-600/20 rounded-lg">
+                        <div className="flex items-start space-x-2">
+                          <div className="w-2 h-2 bg-blue-400 rounded-full mt-1.5 flex-shrink-0"></div>
+                          <div>
+                            <p className="text-sm text-blue-300 font-medium">Past Date Leaves</p>
+                            <p className="text-xs text-blue-400 mt-1">
+                              You can select past dates if you forgot to log your leave earlier. This is useful for retroactive leave applications.
+                            </p>
+                          </div>
+                        </div>
                       </div>
+                      
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-2">
+                            Start Date *
+                          </label>
+                          <CustomDatePicker
+                            selected={watchedStartDate}
+                            onChange={(date) => setValue('startDate', date)}
+                            placeholderText="Select start date"
+                            className={errors.startDate ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}
+                          />
+                          {errors.startDate && (
+                            <p className="mt-1 text-sm text-red-500">{errors.startDate.message}</p>
+                          )}
+                        </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                          End Date *
-                        </label>
-                        <CustomDatePicker
-                          selected={watchedEndDate}
-                          onChange={(date) => setValue('endDate', date)}
-                          minDate={watchedStartDate || new Date()}
-                          placeholderText="Select end date"
-                          className={errors.endDate ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}
-                        />
-                        {errors.endDate && (
-                          <p className="mt-1 text-sm text-red-500">{errors.endDate.message}</p>
-                        )}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-2">
+                            End Date *
+                          </label>
+                          <CustomDatePicker
+                            selected={watchedEndDate}
+                            onChange={(date) => setValue('endDate', date)}
+                            minDate={watchedStartDate}
+                            placeholderText="Select end date"
+                            className={errors.endDate ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}
+                          />
+                          {errors.endDate && (
+                            <p className="mt-1 text-sm text-red-500">{errors.endDate.message}</p>
+                          )}
+                        </div>
                       </div>
                     </div>
 
