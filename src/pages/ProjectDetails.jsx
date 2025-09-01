@@ -442,16 +442,29 @@ const ProjectDetails = () => {
                   // Helper function to get start of week (Monday) at midnight
                   const getStartOfWeek = (date) => {
                     const d = new Date(date);
-                    const day = d.getDay();
+                    const day = d.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
                     const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
-                    d.setDate(d.getDate() + diff);
-                    d.setHours(0, 0, 0, 0); // Set to start of day
-                    return d;
+                    const startOfWeek = new Date(d.getFullYear(), d.getMonth(), diff);
+                    startOfWeek.setHours(0, 0, 0, 0); // Set to start of day
+                    return startOfWeek;
                   };
 
                   // Get current week start and adjust for offset
                   const now = new Date();
-                  const currentWeekStart = getStartOfWeek(now);
+                  
+                  // If we have time logs, use the most recent log's date as reference
+                  // This helps when logs are in a different year (like 2025)
+                  let referenceDate = now;
+                  if (analytics.recentLogs.length > 0) {
+                    const mostRecentLogDate = new Date(analytics.recentLogs[0].date);
+                    // If the most recent log is more than 30 days from now, use the log's date as reference
+                    const daysDiff = Math.abs((mostRecentLogDate - now) / (1000 * 60 * 60 * 24));
+                    if (daysDiff > 30) {
+                      referenceDate = mostRecentLogDate;
+                    }
+                  }
+                  
+                  const currentWeekStart = getStartOfWeek(referenceDate);
                   const targetWeekStart = new Date(currentWeekStart);
                   targetWeekStart.setDate(currentWeekStart.getDate() - (currentWeekOffset * 7));
                   
@@ -460,10 +473,19 @@ const ProjectDetails = () => {
                   targetWeekEnd.setHours(23, 59, 59, 999); // Set to end of day
 
                   // Filter logs for the target week
-                  console.log('Daily Hours Breakdown - Week filtering:');
-                  console.log('Target week start:', targetWeekStart);
-                  console.log('Target week end:', targetWeekEnd);
-                  console.log('All recent logs:', analytics.recentLogs);
+                  console.log('=== Daily Hours Breakdown - Week filtering ===');
+                  console.log('Now:', now.toLocaleDateString());
+                  console.log('Reference date used:', referenceDate.toLocaleDateString());
+                  console.log('Current week offset:', currentWeekOffset);
+                  console.log('Target week start:', targetWeekStart.toLocaleDateString(), targetWeekStart);
+                  console.log('Target week end:', targetWeekEnd.toLocaleDateString(), targetWeekEnd);
+                  console.log('All recent logs:', analytics.recentLogs.map(log => ({
+                    id: log.id,
+                    date: log.date,
+                    dateString: new Date(log.date).toLocaleDateString(),
+                    hours: log.hours,
+                    workType: log.workType
+                  })));
                   
                   const weekLogs = analytics.recentLogs.filter(log => {
                     const logDate = new Date(log.date);
@@ -540,20 +562,46 @@ const ProjectDetails = () => {
 
                   // If no logs exist for the entire week, show empty state
                   if (!hasAnyLogs) {
+                    // Find the week offset for the most recent time log
+                    const findWeekWithLogs = () => {
+                      if (analytics.recentLogs.length === 0) return null;
+                      
+                      const mostRecentLog = analytics.recentLogs[0];
+                      const logDate = new Date(mostRecentLog.date);
+                      const logWeekStart = getStartOfWeek(logDate);
+                      const currentWeekStart = getStartOfWeek(now);
+                      
+                      // Calculate the difference in weeks
+                      const weekDiff = Math.round((currentWeekStart - logWeekStart) / (7 * 24 * 60 * 60 * 1000));
+                      return weekDiff;
+                    };
+                    
+                    const targetWeekOffset = findWeekWithLogs();
+                    
                     return (
                       <div key="no-logs" className="text-center py-8">
                         <Clock className="w-12 h-12 text-gray-600 mx-auto mb-3" />
                         <p className="text-gray-400">
                           No time logs recorded for {currentWeekOffset === 0 ? 'this week' : 'this week'}
                         </p>
-                        {currentWeekOffset > 0 && (
-                          <button
-                            onClick={() => setCurrentWeekOffset(0)}
-                            className="text-primary-400 hover:text-primary-300 text-sm mt-2 transition-colors"
-                          >
-                            Go to current week
-                          </button>
-                        )}
+                        <div className="mt-3 space-y-2">
+                          {currentWeekOffset > 0 && (
+                            <button
+                              onClick={() => setCurrentWeekOffset(0)}
+                              className="block mx-auto text-primary-400 hover:text-primary-300 text-sm transition-colors"
+                            >
+                              Go to current week
+                            </button>
+                          )}
+                          {targetWeekOffset !== null && targetWeekOffset !== currentWeekOffset && (
+                            <button
+                              onClick={() => setCurrentWeekOffset(targetWeekOffset)}
+                              className="block mx-auto text-green-400 hover:text-green-300 text-sm transition-colors"
+                            >
+                              Go to week with time logs ({new Date(analytics.recentLogs[0]?.date).toLocaleDateString()})
+                            </button>
+                          )}
+                        </div>
                       </div>
                     );
                   }
