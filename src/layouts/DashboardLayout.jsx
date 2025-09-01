@@ -23,6 +23,9 @@ import toast from 'react-hot-toast';
 const DashboardLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { userData, logout, isAdmin } = useAuthStore();
+  
+  // Debug logging
+  console.log('DashboardLayout render:', { userData, isAdmin: typeof isAdmin });
   const navigate = useNavigate();
   const location = useLocation();
 

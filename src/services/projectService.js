@@ -259,9 +259,14 @@ class ProjectService {
       const timeLogs = querySnapshot.docs.map(doc => {
         const data = doc.data();
         console.log('Time log data:', { id: doc.id, projectId: data.projectId, hours: data.hours, date: data.date });
+        
+        // Convert Firestore Timestamp to Date object
+        const processedDate = data.date?.toDate?.() || data.date;
+        
         return {
           id: doc.id,
           ...data,
+          date: processedDate,
           createdAt: data.createdAt?.toDate?.() || data.createdAt,
           updatedAt: data.updatedAt?.toDate?.() || data.updatedAt
         };
@@ -294,12 +299,20 @@ class ProjectService {
       }
       
       const querySnapshot = await getDocs(q);
-      const results = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate?.() || doc.data().createdAt,
-        updatedAt: doc.data().updatedAt?.toDate?.() || doc.data().updatedAt
-      }));
+      const results = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        
+        // Convert Firestore Timestamp to Date object
+        const processedDate = data.date?.toDate?.() || data.date;
+        
+        return {
+          id: doc.id,
+          ...data,
+          date: processedDate,
+          createdAt: data.createdAt?.toDate?.() || data.createdAt,
+          updatedAt: data.updatedAt?.toDate?.() || data.updatedAt
+        };
+      });
 
       // Apply limit on client side if Firestore limit failed
       if (limit && typeof limit === 'number' && limit > 0) {
