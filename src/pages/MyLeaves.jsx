@@ -172,40 +172,132 @@ const MyLeaves = () => {
             animate={{ opacity: 1, y: 0 }}
             className="card"
           >
-            <div className="flex items-center space-x-3 mb-4">
+            <div className="flex items-center space-x-3 mb-6">
               <div className="p-2 bg-primary-600/20 rounded-lg">
                 <Calendar className="w-5 h-5 text-primary-400" />
               </div>
-              <h2 className="text-lg font-semibold text-white">Leave Balance</h2>
+              <div>
+                <h2 className="text-lg font-semibold text-white">Leave Balance</h2>
+                <p className="text-sm text-gray-400">Your available leave days</p>
+              </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {Object.values(LEAVE_TYPES).map((type) => (
-                <div key={type} className="text-center p-4 bg-dark-700 rounded-lg">
-                  <p className="text-sm text-gray-400 mb-2">{getLeaveTypeLabel(type)}</p>
-                  <p className={`text-2xl font-bold ${getLeaveBalanceColor(type)}`}>
-                    {leaveBalance.remaining[type]}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    of {leaveBalance.allocation[type]} days remaining
-                  </p>
-                  <div className="mt-2">
-                    <div className="w-full bg-dark-600 rounded-full h-2">
-                      <div 
-                        className={`h-2 rounded-full ${
-                          leaveBalance.remaining[type] <= 0 
-                            ? 'bg-red-500' 
-                            : leaveBalance.remaining[type] <= 2 
-                            ? 'bg-yellow-500' 
-                            : 'bg-green-500'
-                        }`}
-                        style={{ 
-                          width: `${Math.max(0, (leaveBalance.remaining[type] / leaveBalance.allocation[type]) * 100)}%` 
-                        }}
-                      />
+              {Object.values(LEAVE_TYPES).map((type, index) => {
+                const remaining = leaveBalance.remaining[type];
+                const allocation = leaveBalance.allocation[type];
+                const percentage = (remaining / allocation) * 100;
+                const isLow = remaining <= 2;
+                const isExhausted = remaining <= 0;
+                
+                return (
+                  <motion.div
+                    key={type}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 + index * 0.1 }}
+                    className="relative group"
+                  >
+                    <div className={`
+                      relative overflow-hidden rounded-xl p-6 border transition-all duration-300
+                      ${isExhausted 
+                        ? 'bg-red-500/10 border-red-500/30 hover:border-red-500/50' 
+                        : isLow 
+                          ? 'bg-yellow-500/10 border-yellow-500/30 hover:border-yellow-500/50' 
+                          : 'bg-green-500/10 border-green-500/30 hover:border-green-500/50'
+                      }
+                      hover:scale-105 hover:shadow-lg
+                    `}>
+                      {/* Background Pattern */}
+                      <div className="absolute inset-0 opacity-5">
+                        <div className="absolute top-0 right-0 w-20 h-20 transform rotate-12">
+                          <Calendar className="w-full h-full" />
+                        </div>
+                      </div>
+                      
+                      {/* Content */}
+                      <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center space-x-2">
+                            <div className={`
+                              p-2 rounded-lg
+                              ${isExhausted 
+                                ? 'bg-red-500/20 text-red-400' 
+                                : isLow 
+                                  ? 'bg-yellow-500/20 text-yellow-400' 
+                                  : 'bg-green-500/20 text-green-400'
+                              }
+                            `}>
+                              <Calendar className="w-4 h-4" />
+                            </div>
+                            <span className="text-sm font-medium text-gray-300">
+                              {getLeaveTypeLabel(type)}
+                            </span>
+                          </div>
+                          {isLow && !isExhausted && (
+                            <div className="flex items-center space-x-1">
+                              <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
+                              <span className="text-xs text-yellow-400 font-medium">Low</span>
+                            </div>
+                          )}
+                          {isExhausted && (
+                            <div className="flex items-center space-x-1">
+                              <div className="w-2 h-2 bg-red-400 rounded-full"></div>
+                              <span className="text-xs text-red-400 font-medium">Exhausted</span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="text-center mb-4">
+                          <div className="flex items-baseline justify-center space-x-1">
+                            <span className={`
+                              text-3xl font-bold
+                              ${isExhausted 
+                                ? 'text-red-400' 
+                                : isLow 
+                                  ? 'text-yellow-400' 
+                                  : 'text-green-400'
+                              }
+                            `}>
+                              {remaining}
+                            </span>
+                            <span className="text-lg text-gray-400">/ {allocation}</span>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">
+                            days remaining
+                          </p>
+                        </div>
+                        
+                        {/* Progress Bar */}
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-gray-400">Used</span>
+                            <span className="text-gray-300 font-medium">{allocation - remaining} days</span>
+                          </div>
+                          <div className="w-full bg-dark-600/50 rounded-full h-2 overflow-hidden">
+                            <motion.div
+                              className={`
+                                h-2 rounded-full transition-all duration-500 ease-out
+                                ${isExhausted 
+                                  ? 'bg-red-500' 
+                                  : isLow 
+                                    ? 'bg-yellow-500' 
+                                    : 'bg-green-500'
+                                }
+                              `}
+                              initial={{ width: 0 }}
+                              animate={{ width: `${percentage}%` }}
+                              transition={{ delay: 0.2 + index * 0.1, duration: 0.8 }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Hover Effect */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-transparent to-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
                     </div>
-                  </div>
-                </div>
-              ))}
+                  </motion.div>
+                );
+              })}
             </div>
           </motion.div>
         )}
