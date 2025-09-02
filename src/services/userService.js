@@ -96,6 +96,7 @@ class UserService {
         phone: userData.phone || '',
         hourlyRate: userData.hourlyRate || 0,
         monthlySalary: userData.monthlySalary || 0,
+        birthday: userData.birthday || '',
         leaveAllocation: userData.leaveAllocation || DEFAULT_LEAVE_ALLOCATION,
         isActive: true,
         createdAt: serverTimestamp(),
@@ -364,6 +365,67 @@ class UserService {
       return analytics;
     } catch (error) {
       console.error('Error getting team analytics:', error);
+      throw error;
+    }
+  }
+
+  // Get upcoming birthdays in the next 2 months
+  async getUpcomingBirthdays() {
+    try {
+      const users = await this.getActiveUsers();
+      const today = new Date();
+      const twoMonthsFromNow = new Date();
+      twoMonthsFromNow.setMonth(twoMonthsFromNow.getMonth() + 2);
+
+      const upcomingBirthdays = users
+        .filter(user => user.birthday) // Only users with birthdays
+        .map(user => {
+          const birthday = new Date(user.birthday);
+          const thisYear = today.getFullYear();
+          const nextYear = thisYear + 1;
+          
+          // Create birthday dates for this year and next year
+          const thisYearBirthday = new Date(thisYear, birthday.getMonth(), birthday.getDate());
+          const nextYearBirthday = new Date(nextYear, birthday.getMonth(), birthday.getDate());
+          
+          // Determine which birthday to use (this year or next year)
+          let upcomingBirthday;
+          if (thisYearBirthday >= today) {
+            upcomingBirthday = thisYearBirthday;
+          } else {
+            upcomingBirthday = nextYearBirthday;
+          }
+          
+          // Calculate days until birthday
+          const timeDiff = upcomingBirthday.getTime() - today.getTime();
+          const daysUntil = Math.ceil(timeDiff / (1000 * 3600 * 24));
+          
+          // Calculate age they'll turn
+          const age = upcomingBirthday.getFullYear() - birthday.getFullYear();
+          
+          return {
+            user: {
+              id: user.id,
+              name: user.name,
+              email: user.email,
+              department: user.department,
+              profilePictureUrl: user.profilePictureUrl
+            },
+            birthday: user.birthday,
+            upcomingBirthday: upcomingBirthday,
+            daysUntil,
+            age,
+            isToday: daysUntil === 0,
+            isThisWeek: daysUntil <= 7,
+            isThisMonth: daysUntil <= 30
+          };
+        })
+        .filter(birthday => birthday.upcomingBirthday <= twoMonthsFromNow) // Only next 2 months
+        .sort((a, b) => a.daysUntil - b.daysUntil); // Sort by closest first
+
+      return upcomingBirthdays;
+    } catch (error) {
+      console.error('Error getting upcoming birthdays:', error);
       throw error;
     }
   }

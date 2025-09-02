@@ -18,6 +18,7 @@ import { projectService } from '../services/projectService';
 import { getWorkTypeLabel, PROJECT_STATUS } from '../types';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import TimeLogModal from '../components/modals/TimeLogModal';
+import UpcomingBirthdays from '../components/dashboard/UpcomingBirthdays';
 
 import toast from 'react-hot-toast';
 
@@ -240,14 +241,14 @@ const Dashboard = () => {
         </div>
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Available Projects */}
           <motion.div
             variants={cardVariants}
             initial="hidden"
             animate="visible"
             transition={{ delay: 0.4 }}
-            className="card"
+            className="card lg:col-span-2"
           >
             <div className="card-header">
               <h3 className="text-lg font-semibold text-white">Available Projects</h3>
@@ -307,12 +308,25 @@ const Dashboard = () => {
             </div>
           </motion.div>
 
-          {/* Recent Time Logs */}
+          {/* Upcoming Birthdays */}
           <motion.div
             variants={cardVariants}
             initial="hidden"
             animate="visible"
             transition={{ delay: 0.5 }}
+          >
+            <UpcomingBirthdays />
+          </motion.div>
+        </div>
+
+        {/* Second Row Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Recent Time Logs */}
+          <motion.div
+            variants={cardVariants}
+            initial="hidden"
+            animate="visible"
+            transition={{ delay: 0.6 }}
             className="card"
           >
             <div className="card-header">
@@ -377,7 +391,7 @@ const Dashboard = () => {
             variants={cardVariants}
             initial="hidden"
             animate="visible"
-            transition={{ delay: 0.6 }}
+            transition={{ delay: 0.7 }}
             className="card"
           >
             <div className="card-header">

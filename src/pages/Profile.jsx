@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { User, Mail, Phone, Building, Save, Lock, Hash } from 'lucide-react';
+import { User, Mail, Phone, Building, Save, Lock, Hash, Calendar } from 'lucide-react';
 import DashboardLayout from '../layouts/DashboardLayout';
 import useAuthStore from '../stores/authStore';
 import { DEPARTMENTS, getDepartmentLabel } from '../types';
@@ -17,6 +17,9 @@ const profileSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
   phone: z.string().optional(),
   department: z.string().optional(),
+  birthday: z.string().optional().refine((val) => !val || /^\d{4}-\d{2}-\d{2}$/.test(val), {
+    message: 'Please enter a valid date (YYYY-MM-DD)'
+  }),
   companyId: z
     .string()
     .trim()
@@ -43,6 +46,7 @@ const Profile = () => {
       email: '',
       phone: '',
       department: '',
+      birthday: '',
       companyId: ''
     }
   });
@@ -57,6 +61,7 @@ const Profile = () => {
         email: userData.email || '',
         phone: userData.phone || '',
         department: userData.department || '',
+        birthday: userData.birthday || '',
         companyId: userData.companyId || ''
       });
     }
@@ -211,6 +216,32 @@ const Profile = () => {
                   placeholder="Enter your phone number"
                 />
               </div>
+            </div>
+
+            {/* Birthday Field */}
+            <div>
+              <label htmlFor="birthday" className="block text-sm font-medium text-gray-300 mb-2">
+                Birthday
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Calendar className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  {...register('birthday')}
+                  type="date"
+                  className={`input-primary pl-10 w-full ${
+                    errors.birthday ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
+                  }`}
+                  placeholder="Select your birthday"
+                />
+              </div>
+              {errors.birthday && (
+                <p className="mt-1 text-sm text-red-500">{errors.birthday.message}</p>
+              )}
+              <p className="text-xs text-gray-500 mt-1">
+                This will be used to show birthday reminders to your team
+              </p>
             </div>
 
             {/* Company ID (Employee ID) */}

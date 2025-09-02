@@ -19,6 +19,7 @@ import { USER_ROLES, DEPARTMENTS } from '../types';
  * @property {string} phone - User's phone number (optional)
  * @property {string} companyId - Employee ID (e.g., C001) (optional)
  * @property {number} hourlyRate - User's hourly rate (optional, default: 0)
+ * @property {string} birthday - User's birthday in YYYY-MM-DD format (optional)
  * @property {boolean} isActive - Whether the user account is active
  * @property {string} profilePicture - URL to profile picture (optional)
  * @property {string} createdAt - ISO timestamp when user was created
@@ -36,6 +37,7 @@ export const defaultUserData = {
   phone: '',
   companyId: '',
   hourlyRate: 0,
+  birthday: '',
   isActive: true,
   profilePicture: null,
   createdAt: new Date().toISOString(),
@@ -57,6 +59,7 @@ export const createUserDocument = (userData, email) => {
     phone: userData.phone || '',
     companyId: userData.companyId || '',
     hourlyRate: userData.hourlyRate || 0,
+    birthday: userData.birthday || '',
     isActive: true,
     profilePicture: null,
     createdAt: new Date().toISOString(),
@@ -104,6 +107,10 @@ export const validateUserData = (userData) => {
 
   if (userData.hourlyRate && (isNaN(userData.hourlyRate) || userData.hourlyRate < 0)) {
     errors.push('Hourly rate must be a positive number');
+  }
+
+  if (userData.birthday && !/^\d{4}-\d{2}-\d{2}$/.test(userData.birthday)) {
+    errors.push('Birthday must be in YYYY-MM-DD format');
   }
 
   return {

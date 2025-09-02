@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { X, User, Mail, Phone, Building, DollarSign, Shield, Lock } from 'lucide-react';
+import { X, User, Mail, Phone, Building, DollarSign, Shield, Lock, Calendar } from 'lucide-react';
 import { USER_ROLES, USER_POSITIONS, getUserPositionLabel } from '../../types';
 import { userService } from '../../services/userService';
 import LoadingSpinner from '../ui/LoadingSpinner';
@@ -17,6 +17,9 @@ const userSchema = z.object({
   position: z.enum(Object.values(USER_POSITIONS)).optional(),
   department: z.string().optional(),
   phone: z.string().optional(),
+  birthday: z.string().optional().refine((val) => !val || /^\d{4}-\d{2}-\d{2}$/.test(val), {
+    message: 'Please enter a valid date (YYYY-MM-DD)'
+  }),
   hourlyRate: z.number().min(0, 'Hourly rate must be non-negative').optional(),
   monthlySalary: z.number().min(0, 'Monthly salary must be non-negative').optional(),
   password: z.string().min(6, 'Password must be at least 6 characters').optional(),
