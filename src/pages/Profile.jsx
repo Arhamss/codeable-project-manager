@@ -10,6 +10,7 @@ import { DEPARTMENTS, getDepartmentLabel } from '../types';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import PasswordChangeModal from '../components/modals/PasswordChangeModal';
 import ProfilePictureUpload from '../components/ui/ProfilePictureUpload';
+import CustomDatePicker from '../components/ui/DatePicker';
 import toast from 'react-hot-toast';
 
 const profileSchema = z.object({
@@ -38,7 +39,9 @@ const Profile = () => {
     register,
     handleSubmit,
     formState: { errors, isDirty },
-    reset
+    reset,
+    watch,
+    setValue
   } = useForm({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -223,19 +226,21 @@ const Profile = () => {
               <label htmlFor="birthday" className="block text-sm font-medium text-gray-300 mb-2">
                 Birthday
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Calendar className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  {...register('birthday')}
-                  type="date"
-                  className={`input-primary pl-10 w-full ${
-                    errors.birthday ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''
-                  }`}
-                  placeholder="Select your birthday"
-                />
-              </div>
+              <CustomDatePicker
+                selected={watch('birthday') ? new Date(watch('birthday')) : null}
+                onChange={(date) => {
+                  if (date) {
+                    // Format date as YYYY-MM-DD for the form
+                    const formattedDate = date.toISOString().split('T')[0];
+                    setValue('birthday', formattedDate, { shouldValidate: true });
+                  } else {
+                    setValue('birthday', '', { shouldValidate: true });
+                  }
+                }}
+                placeholderText="Select your birthday"
+                className=""
+                maxDate={new Date()} // Can't select future dates for birthday
+              />
               {errors.birthday && (
                 <p className="mt-1 text-sm text-red-500">{errors.birthday.message}</p>
               )}
