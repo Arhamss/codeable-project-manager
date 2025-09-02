@@ -111,7 +111,6 @@ const UserTimeLogs = () => {
     setShowTimeLogModal(false);
     setEditingTimeLog(null);
     loadData();
-    toast.success(editingTimeLog ? 'Time log updated successfully!' : 'Time logged successfully!');
   };
 
   const handleEditTimeLog = (timeLog) => {
@@ -360,14 +359,14 @@ const UserTimeLogs = () => {
                           <div className="flex items-center space-x-2">
                             <button
                               onClick={() => handleEditTimeLog(log)}
-                              className="p-1 text-gray-400 hover:text-yellow-400 transition-colors"
+                              className="p-2 text-gray-400 hover:text-yellow-400 hover:bg-yellow-400/10 rounded-lg transition-all duration-200"
                               title="Edit Time Log"
                             >
                               <Edit className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleDeleteTimeLog(log.id, log.projectId)}
-                              className="p-1 text-gray-400 hover:text-red-400 transition-colors"
+                              className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all duration-200"
                               title="Delete Time Log"
                             >
                               <Trash2 className="w-4 h-4" />

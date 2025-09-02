@@ -110,9 +110,11 @@ const TimeLogModal = ({ isOpen, onClose, onSuccess, projects = [], preselectedPr
       if (isEditing) {
         // Update existing time log
         await projectService.updateTimeLog(timeLog.id, timeLogData);
+        toast.success('Time log updated successfully!');
       } else {
         // Create new time log
         await projectService.logTime(timeLogData);
+        toast.success('Time logged successfully!');
       }
       
       reset();
@@ -127,6 +129,20 @@ const TimeLogModal = ({ isOpen, onClose, onSuccess, projects = [], preselectedPr
 
   const handleClose = () => {
     if (!isSubmitting) {
+      // If editing and form has changes, confirm before closing
+      if (isEditing) {
+        const formData = watch();
+        const hasChanges = 
+          formData.projectId !== timeLog?.projectId ||
+          formData.hours !== timeLog?.hours ||
+          formData.workType !== timeLog?.workType ||
+          formData.description !== timeLog?.description ||
+          new Date(formData.date).getTime() !== new Date(timeLog?.date).getTime();
+          
+        if (hasChanges && !window.confirm('You have unsaved changes. Are you sure you want to close?')) {
+          return;
+        }
+      }
       reset();
       onClose();
     }
@@ -160,10 +176,17 @@ const TimeLogModal = ({ isOpen, onClose, onSuccess, projects = [], preselectedPr
             >
               <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-dark-900 border border-dark-800 p-6 text-left align-middle shadow-xl transition-all">
                 <div className="flex items-center justify-between mb-6">
-                  <Dialog.Title className="text-lg font-semibold text-white flex items-center">
-                    <Clock className="w-5 h-5 mr-2 text-primary-400" />
-                    {isEditing ? 'Edit Time Log' : 'Log Time'}
-                  </Dialog.Title>
+                  <div className="flex items-center">
+                    <Dialog.Title className="text-lg font-semibold text-white flex items-center">
+                      <Clock className="w-5 h-5 mr-2 text-primary-400" />
+                      {isEditing ? 'Edit Time Log' : 'Log Time'}
+                    </Dialog.Title>
+                    {isEditing && (
+                      <span className="ml-3 px-2 py-1 text-xs font-medium bg-yellow-600/20 text-yellow-400 rounded-full">
+                        Editing
+                      </span>
+                    )}
+                  </div>
                   <button
                     onClick={handleClose}
                     disabled={isSubmitting}

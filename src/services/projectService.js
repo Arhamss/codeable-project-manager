@@ -209,6 +209,10 @@ class ProjectService {
   // Update time log
   async updateTimeLog(timeLogId, updateData) {
     try {
+      // Get the original time log to check if project changed
+      const originalTimeLogDoc = await getDoc(doc(db, 'timeLogs', timeLogId));
+      const originalData = originalTimeLogDoc.data();
+      
       const timeLogRef = doc(db, 'timeLogs', timeLogId);
       const dataToUpdate = {
         ...updateData,
@@ -217,9 +221,22 @@ class ProjectService {
       
       await updateDoc(timeLogRef, dataToUpdate);
       
-      // Update project's total logged hours if project changed
-      if (updateData.projectId) {
-        await this.updateProjectTotalHours(updateData.projectId);
+      // Update project total hours
+      const oldProjectId = originalData?.projectId;
+      const newProjectId = updateData.projectId;
+      
+      // If project changed, update both old and new project totals
+      if (oldProjectId && newProjectId && oldProjectId !== newProjectId) {
+        await Promise.all([
+          this.updateProjectTotalHours(oldProjectId),
+          this.updateProjectTotalHours(newProjectId)
+        ]);
+      } else if (newProjectId) {
+        // If project didn't change or we're just updating the same project
+        await this.updateProjectTotalHours(newProjectId);
+      } else if (oldProjectId) {
+        // Fallback to update the original project
+        await this.updateProjectTotalHours(oldProjectId);
       }
       
       return { id: timeLogId, ...dataToUpdate };
