@@ -245,19 +245,6 @@ const TimeLogModal = ({ isOpen, onClose, onSuccess, projects = [], preselectedPr
                     {errors.workType && (
                       <p className="mt-1 text-sm text-red-500">{errors.workType.message}</p>
                     )}
-                    
-                    {/* UI Design Notice */}
-                    <div className="mt-2 p-2 bg-blue-600/10 border border-blue-600/20 rounded-lg">
-                      <div className="flex items-start space-x-2">
-                        <div className="w-2 h-2 bg-blue-400 rounded-full mt-1.5 flex-shrink-0"></div>
-                        <div>
-                          <p className="text-xs text-blue-300 font-medium">UI/UX Design Work</p>
-                          <p className="text-xs text-blue-400 mt-0.5">
-                            Design work is outsourced to external agencies and not tracked in time logs.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
