@@ -392,7 +392,7 @@ const Dashboard = () => {
             initial="hidden"
             animate="visible"
             transition={{ delay: 0.7 }}
-            className="card"
+            className="card self-start"
           >
             <div className="card-header">
               <h3 className="text-lg font-semibold text-white">Company Policies</h3>
