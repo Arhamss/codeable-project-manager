@@ -86,7 +86,7 @@ const UpcomingBirthdays = () => {
 
   if (error) {
     return (
-      <div className="card">
+      <div className="card h-full">
         <div className="card-header">
           <h3 className="text-lg font-semibold text-white flex items-center">
             <Cake className="w-5 h-5 mr-2 text-pink-400" />
@@ -94,8 +94,20 @@ const UpcomingBirthdays = () => {
           </h3>
           <p className="text-gray-400 text-sm">Team birthdays in the next 2 months</p>
         </div>
-        <div className="text-center py-8 text-red-400">
-          <p>{error}</p>
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="w-16 h-16 bg-red-600/20 rounded-full flex items-center justify-center mb-4">
+            <Calendar className="w-8 h-8 text-red-400" />
+          </div>
+          <h4 className="text-lg font-medium text-white mb-2">Unable to Load Birthdays</h4>
+          <p className="text-gray-400 text-sm mb-4 max-w-sm">
+            We're having trouble loading the birthday information. Please try refreshing the page.
+          </p>
+          <button
+            onClick={loadUpcomingBirthdays}
+            className="px-4 py-2 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition-colors text-sm"
+          >
+            Try Again
+          </button>
         </div>
       </div>
     );
